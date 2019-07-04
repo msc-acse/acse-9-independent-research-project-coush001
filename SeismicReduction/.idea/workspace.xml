@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e61342b1-1f5e-4147-976e-bdfe1cc30393" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../.png" beforeDir="false" afterPath="$PROJECT_DIR$/../.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GUI_tool.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../GUI_tool.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../pickled/model.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/../pickled/model.pickle" afterDir="false" />
-    </list>
+    <list default="true" id="e61342b1-1f5e-4147-976e-bdfe1cc30393" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,10 +154,6 @@
             <path>
               <item name="SeismicReduction" type="b2602c69:ProjectViewProjectNode" />
               <item name="SeismicReduction" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SeismicReduction" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Scratches and Consoles" type="1a2a3e82:ScratchProjectViewPane$MyProjectNode" />
             </path>
           </expand>
           <select />
