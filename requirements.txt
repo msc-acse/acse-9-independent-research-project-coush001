@@ -1,0 +1,17 @@
+bokeh==0.12.16
+datashader==0.7.0
+datashape==0.5.2
+livelossplot==0.3.4
+matplotlib==3.0.1
+numpy==1.14.3
+numpydoc==0.8.0
+pytest
+scikit-image==0.13.1
+scikit-learn==0.19.1
+scipy==1.1.0
+seaborn==0.8.1
+segypy==0.57
+torch==1.0.1.post2
+torchvision==0.2.2.post3
+umap==0.1.1
+umap-learn==0.3.8

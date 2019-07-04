@@ -1,0 +1,11 @@
+
+Near and far offset partial stacks: subcubes from full 3-d cubes.
+segy format
+
+inline: 1300-1500, every 2
+xline: 1500-2000, every 2
+time: 1500-2500 ms
+total 25351 traces for each subcube.
+
+xline number stored in bytes 21-26.
+inline number (multiplied by 1000) stored in bytes 41-44.
