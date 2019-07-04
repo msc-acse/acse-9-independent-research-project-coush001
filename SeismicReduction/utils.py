@@ -11,7 +11,6 @@ import torch.nn as nn
 import segypy
 
 
-
 # utils
 def set_seed(seed):
     random.seed(seed)
@@ -65,16 +64,6 @@ def interpolate_horizon(horizon):
         horizon[p[0], p[1]] = val
 
     return horizon
-
-
-def flatten_on_horizon(amplitude, horizon, twt, top_add=12, below_add=52):
-    traces = np.zeros((horizon.shape[0], horizon.shape[1], top_add + below_add))
-    for i in range(horizon.shape[0]):
-        hrz_idx = [np.abs(twt - val).argmin() for val in horizon[i, :]]
-        for j in range(horizon.shape[1]):
-            traces[i, j, :] = amplitude[hrz_idx[j] - top_add:hrz_idx[j] + below_add, i, j]
-
-    return traces
 
 
 #  VAE functions
