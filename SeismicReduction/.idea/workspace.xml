@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e61342b1-1f5e-4147-976e-bdfe1cc30393" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../Pre_Processing_investigations.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../Pre_Processing_investigations.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Prototype_NoteBook_2.0.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../Prototype_NoteBook_2.0.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/../tests.py" afterDir="false" />
-    </list>
+    <list default="true" id="e61342b1-1f5e-4147-976e-bdfe1cc30393" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,8 +90,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="28">
-              <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+            <state relative-caret-position="15">
+              <caret line="11" lean-forward="true" selection-start-line="11" selection-end-line="11" />
               <folding>
                 <element signature="e#32#324#0" />
                 <element signature="e#408#753#0" />
@@ -252,7 +247,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="808" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49791667" visible="true" weight="0.24947146" />
@@ -398,8 +392,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="28">
-          <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+        <state relative-caret-position="15">
+          <caret line="11" lean-forward="true" selection-start-line="11" selection-end-line="11" />
           <folding>
             <element signature="e#32#324#0" />
             <element signature="e#408#753#0" />
