@@ -40,7 +40,3 @@ venv.bak/
 #pickle
 .pickle
 
-#data
-data/
-
-
