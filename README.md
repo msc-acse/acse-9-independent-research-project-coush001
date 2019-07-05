@@ -5,7 +5,7 @@ The aim of this project is to deliver a set of tools to enable the efficient exp
 
 ---
 
-## Get started:
+## Getting started:
 
 ### Installation and Setup:
 - package and dependency installation
@@ -14,7 +14,7 @@ The aim of this project is to deliver a set of tools to enable the efficient exp
 - use of tools in a script
 - use of the notebook GUI
 
-
+---
 
 ## Testing
 All testing will be included in the travis testing routine for continuous integration of features
@@ -27,6 +27,8 @@ Base cases wich have been verified to give the expected result have been logged 
 
 ### Unit testing
 Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs
+
+---
 
 ## Built with:
 python 3
