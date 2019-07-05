@@ -1,7 +1,18 @@
 # SEISMIC REDUCTION 
-## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation
+### Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation
 
 ---
+
+## Get started:
+
+### Installation and Setup:
+- package and dependency installation
+
+### Example Usage
+- use of tools in a script
+- use of the notebook GUI
+
+
 
 ## Testing
 All testing will be included in the travis testing routine for continuous integration of features
