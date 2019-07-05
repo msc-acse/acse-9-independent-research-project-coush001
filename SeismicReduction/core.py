@@ -224,10 +224,8 @@ class VAE_model(ModelAgent):
 
     def create_dataloader(self, batch_size=32):
         # create torch tensor
-        assert self.input.shape[1] == 2, 'expecting a 3D input'
+        assert self.input.shape[1] == 2, 'expecting a 3D input with 2 channels'
         X = torch.from_numpy(self.input).float()
-        # split the concatenated input back into two arrays
-        #         X = torch.from_numpy(np.stack(np.split(self.input, 2, axis=1), 1)).float()
 
         # Create a stacked representation and a zero tensor so we can use the standard Pytorch TensorDataset
         y = torch.from_numpy(np.zeros((X.shape[0], 1))).float()
@@ -255,7 +253,7 @@ class VAE_model(ModelAgent):
                                                       shuffle=False,
                                                       **kwargs)
 
-    def train_vae(self, cuda=False, epochs=5, hidden_size=8, lr=1e-2):
+    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2):
         set_seed(42)  # Set the random seed
         self.model = VAE(hidden_size,
                          self.input.shape)  # Inititalize the model
@@ -265,10 +263,10 @@ class VAE_model(ModelAgent):
                                lr=lr,
                                betas=(0.9, 0.999))
 
-        liveloss = PlotLosses()
-        liveloss.skip_first = 0
-        liveloss.figsize = (16, 10)  # , fig_path=self.path
-        liveloss.fig_path = './'
+        if self.plot_loss:
+            liveloss = PlotLosses()
+            liveloss.skip_first = 0
+            liveloss.figsize = (16, 10)  # , fig_path=self.path
 
         # Start training loop
         for epoch in range(1, epochs + 1):
@@ -279,12 +277,13 @@ class VAE_model(ModelAgent):
                        cuda=False)  # Train model on train dataset
             testl = test(epoch, self.model, self.test_loader,
                          cuda=False)  # Validate model on test dataset
-            #             %matplotlib inline
-            logs = {}
-            logs['' + 'ELBO'] = tl
-            logs['val_' + 'ELBO'] = testl
-            liveloss.update(logs)
-            liveloss.draw()
+
+            if self.plot_loss:
+                logs = {}
+                logs['' + 'ELBO'] = tl
+                logs['val_' + 'ELBO'] = testl
+                liveloss.update(logs)
+                liveloss.draw()
 
     def run_vae(self):
         _, self.zs = forward_all(self.model, self.all_loader, cuda=False)
@@ -299,9 +298,10 @@ class VAE_model(ModelAgent):
         print("\n\nVAE -> 2-D UMAP representation complete\n")
         return embedding
 
-    def reduce(self, epochs, hidden_size, lr, umap_neighbours, umap_dist):
+    def reduce(self, epochs, hidden_size, lr, umap_neighbours, umap_dist, plot_loss=True):
         if hidden_size < 2: raise Exception('Please use hidden size > 1')
 
+        self.plot_loss = plot_loss  # define whether to plot losses or not
         # Directory for logging runs
         #         now = datetime.datetime.now().strftime("%I-%M-%S-%p")
         #         self.path = self.path + '/{}/'.format(now, self.name)
