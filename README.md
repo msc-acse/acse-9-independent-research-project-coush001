@@ -19,6 +19,9 @@ The aim of this project is to deliver a set of tools to enable the efficient exp
 ## Testing
 All testing will be included in the travis testing routine for continuous integration of features
 
+### Build Status
+[![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
+
 ### Integration testing
 Base cases wich have been verified to give the expected result have been logged and will be used in the integration tests to ensure the full analysis pipeline is working as expected
 
