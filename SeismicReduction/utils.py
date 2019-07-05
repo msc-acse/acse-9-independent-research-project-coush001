@@ -30,7 +30,8 @@ def load_seismic(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
     seis, header, trace_headers = segypy.readSegy(filename)
     amplitude = seis.reshape(header['ns'], inl.size, crl.size)
     lagtime = trace_headers['LagTimeA'][0] * -1
-    twt = np.arange(lagtime, header['dt'] / 1e3 * header['ns'] + lagtime, header['dt'] / 1e3)
+    twt = np.arange(lagtime, header['dt'] / 1e3 * header['ns'] + lagtime,
+                    header['dt'] / 1e3)
     return amplitude, twt
 
 
@@ -59,7 +60,10 @@ def interpolate_horizon(horizon):
                 wanted.append([i, j])
 
     points = np.array(points)
-    zs2 = scipy.interpolate.griddata(points[:, 0:2], points[:, 2], wanted, method="cubic")
+    zs2 = scipy.interpolate.griddata(points[:, 0:2],
+                                     points[:, 2],
+                                     wanted,
+                                     method="cubic")
     for p, val in zip(wanted, zs2):
         horizon[p[0], p[1]] = val
 
@@ -76,11 +80,13 @@ class VAE(nn.Module):
         shape = shape_in[-1]  #  /2 as will be split into near and far channels
         #         print('dimension assumed after split:', shape)
         assert shape % 4 == 0, 'input for VAE must be factor of 4'
-        reductions = [0.5, 0.5, 0.5]  # specify reduction factor of each convolution
+        reductions = [0.5, 0.5,
+                      0.5]  # specify reduction factor of each convolution
         self.last_conv_channels = 34  # number of channels after last convolution
 
         # find the resultant dimension post convolutional layers
-        post_conv = self.post_conv_dim(shape, reductions, self.last_conv_channels)
+        post_conv = self.post_conv_dim(shape, reductions,
+                                       self.last_conv_channels)
         self.linear_dimension = post_conv * self.last_conv_channels
 
         #         print('Reductions: {}, Number of Channels on last convultion: {}'.format(reductions, self.last_conv_channels))
@@ -92,7 +98,11 @@ class VAE(nn.Module):
         self.conv1 = nn.Conv1d(2, 3, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv1d(3, 32, kernel_size=3, stride=2, padding=1)
         self.conv3 = nn.Conv1d(32, 32, kernel_size=3, stride=2, padding=1)
-        self.conv4 = nn.Conv1d(32, self.last_conv_channels, kernel_size=3, stride=2, padding=1)
+        self.conv4 = nn.Conv1d(32,
+                               self.last_conv_channels,
+                               kernel_size=3,
+                               stride=2,
+                               padding=1)
         self.fc1 = nn.Linear(self.linear_dimension, 128)
 
         # Latent space
@@ -102,9 +112,21 @@ class VAE(nn.Module):
         # Decoder
         self.fc3 = nn.Linear(hidden_size, 128)
         self.fc4 = nn.Linear(128, self.linear_dimension)
-        self.deconv1 = nn.ConvTranspose1d(self.last_conv_channels, 32, kernel_size=4, stride=2, padding=1)
-        self.deconv2 = nn.ConvTranspose1d(32, 32, kernel_size=4, stride=2, padding=1)
-        self.deconv3 = nn.ConvTranspose1d(32, 32, kernel_size=4, stride=2, padding=1)
+        self.deconv1 = nn.ConvTranspose1d(self.last_conv_channels,
+                                          32,
+                                          kernel_size=4,
+                                          stride=2,
+                                          padding=1)
+        self.deconv2 = nn.ConvTranspose1d(32,
+                                          32,
+                                          kernel_size=4,
+                                          stride=2,
+                                          padding=1)
+        self.deconv3 = nn.ConvTranspose1d(32,
+                                          32,
+                                          kernel_size=4,
+                                          stride=2,
+                                          padding=1)
         self.conv5 = nn.Conv1d(32, 2, kernel_size=3, stride=1, padding=1)
 
         self.relu = nn.ReLU()
@@ -113,7 +135,8 @@ class VAE(nn.Module):
     def post_conv_dim(self, in_shape, conv_reductions, last_conv_channels):
         """ Calculates the resultant dimension from convolutions"""
         for i in conv_reductions:
-            in_shape = int(np.ceil(in_shape * i))  #  calc the resultant size from each conv
+            in_shape = int(np.ceil(
+                in_shape * i))  #  calc the resultant size from each conv
         return in_shape
 
     def encode(self, x):
@@ -140,7 +163,8 @@ class VAE(nn.Module):
         h3 = self.relu(self.fc3(z))
         out = self.relu(self.fc4(h3))
         #         print('in decode, shape before conv(expect linear):', out.shape)
-        out = out.view(out.size(0), self.last_conv_channels, int(self.linear_dimension / self.last_conv_channels))
+        out = out.view(out.size(0), self.last_conv_channels,
+                       int(self.linear_dimension / self.last_conv_channels))
         #         print('in decode, after reshape for conv:', out.shape)
         out = self.relu(self.deconv1(out))
         #         print('in decode, after conv1:', out.shape)
@@ -161,7 +185,8 @@ def loss_function(recon_x, x, mu, logvar, window_size):
     criterion_mse = nn.MSELoss(size_average=False)
     #     print('in loss func, window_size:', window_size)
     #     print('in loss func, x shape:', x.shape, recon_x.shape)
-    MSE = criterion_mse(recon_x.view(-1, 2, window_size), x.view(-1, 2, window_size))
+    MSE = criterion_mse(recon_x.view(-1, 2, window_size),
+                        x.view(-1, 2, window_size))
 
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
@@ -186,7 +211,11 @@ def train(epoch, model, optimizer, train_loader, cuda=False, log_interval=10):
         optimizer.zero_grad()
         recon_batch, mu, logvar, _ = model(data)
         #         print('In train, data shape:', print(data.shape))
-        loss = loss_function(recon_batch, data, mu, logvar, window_size=data.shape[-1])
+        loss = loss_function(recon_batch,
+                             data,
+                             mu,
+                             logvar,
+                             window_size=data.shape[-1])
         loss.backward()
         train_loss += loss.item() * data.size(0)
         optimizer.step()
@@ -211,7 +240,8 @@ def test(epoch, model, test_loader, cuda=False, log_interval=10):
                 data = data.cuda()
             data = Variable(data)
             recon_batch, mu, logvar, _ = model(data)
-            test_loss += loss_function(recon_batch, data, mu, logvar, data.shape[-1]).item() * data.size(0)
+            test_loss += loss_function(recon_batch, data, mu, logvar,
+                                       data.shape[-1]).item() * data.size(0)
 
         test_loss /= len(test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(test_loss))

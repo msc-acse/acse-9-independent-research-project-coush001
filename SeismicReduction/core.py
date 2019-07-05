@@ -21,12 +21,11 @@ from sklearn.model_selection import ShuffleSplit
 # File load and save imports
 from .utils import *
 
-
 # live loss plots
 from livelossplot import PlotLosses
 
-
 ### END OF IMPORTS
+
 
 # processor
 class DataHolder:
@@ -45,15 +44,21 @@ class DataHolder:
         self.wells = {}
 
     def add_near(self, fname):
-        self.near, twt = load_seismic(fname, inlines=self.inlines, xlines=self.xlines)
+        self.near, twt = load_seismic(fname,
+                                      inlines=self.inlines,
+                                      xlines=self.xlines)
         self.twt = twt
 
     def add_far(self, fname):
-        self.far, twt = load_seismic(fname, inlines=self.inlines, xlines=self.xlines)
-        assert (self.twt == twt).all, "This twt does not match the twt from the previous segy"
+        self.far, twt = load_seismic(fname,
+                                     inlines=self.inlines,
+                                     xlines=self.xlines)
+        assert (self.twt == twt
+                ).all, "This twt does not match the twt from the previous segy"
 
     def add_horizon(self, fname):
-        self.horizon = interpolate_horizon(load_horizon(fname, inlines=self.inlines, xlines=self.xlines))
+        self.horizon = interpolate_horizon(
+            load_horizon(fname, inlines=self.inlines, xlines=self.xlines))
 
     def add_well(self, well_id, well_i, well_x):
         self.wells[well_id] = [well_i, well_x]
@@ -75,13 +80,18 @@ class Processor:
         # input data = [near(twt, x1, x2),far(twt, x1, x2)]
         for amplitude in data:
             # create output trace shape for each set in shape: (twt, x1, x2)
-            traces = np.zeros((top_add + below_add, horizon.shape[0], horizon.shape[1]))
+            traces = np.zeros(
+                (top_add + below_add, horizon.shape[0], horizon.shape[1]))
             for i in range(horizon.shape[0]):
                 #  find the corresponding index of the horizon in amplitude twt 'domain'
-                hrz_idx = [np.abs(self.twt - val).argmin() for val in horizon[i, :]]
+                hrz_idx = [
+                    np.abs(self.twt - val).argmin() for val in horizon[i, :]
+                ]
                 for j in range(horizon.shape[1]):
                     # place the twt's from above_below horizon into 3rd index
-                    traces[:, i, j] = amplitude[hrz_idx[j] - top_add:hrz_idx[j] + below_add, i, j]
+                    traces[:, i, j] = amplitude[hrz_idx[j] -
+                                                top_add:hrz_idx[j] +
+                                                below_add, i, j]
             out.append(traces)
 
         return out  # list of far and near, flattened amplitudes shape (twt, x1,x2)
@@ -98,7 +108,8 @@ class Processor:
         well_x = 138
         out = []
         for i in data:
-            well_variance = np.mean(np.std(i[well_i - 2:well_i + 1, well_x - 2:well_x + 1], 2))
+            well_variance = np.mean(
+                np.std(i[well_i - 2:well_i + 1, well_x - 2:well_x + 1], 2))
             i /= well_variance
             out.append(i)
 
@@ -115,7 +126,10 @@ class Processor:
         x_avo = self.out[1]
         y_avo = self.out[0] - self.out[1]
 
-        lin_reg = LinearRegression(fit_intercept=False, normalize=False, copy_X=True, n_jobs=1)
+        lin_reg = LinearRegression(fit_intercept=False,
+                                   normalize=False,
+                                   copy_X=True,
+                                   n_jobs=1)
         lin_reg.fit(x_avo.reshape(-1, 1), y_avo.reshape(-1, 1))
 
         self.attributes['FF'] = y_avo - lin_reg.coef_ * x_avo
@@ -123,7 +137,8 @@ class Processor:
     def condition_attributes(self):
         #  flatten horizon array
         horizon = self.attributes['horizon_raw']
-        self.attributes['horizon'] = horizon.reshape(horizon.shape[0] * horizon.shape[1])
+        self.attributes['horizon'] = horizon.reshape(horizon.shape[0] *
+                                                     horizon.shape[1])
 
         #  condense fluid factor to min of array
         self.attributes['FF'] = np.min(self.attributes['FF'], 1)
@@ -153,6 +168,7 @@ class Processor:
         print('Processor has made an output with shape: ', self.out.shape)
 
         return [self.out, self.attributes]
+
 
 # model
 class ModelAgent:
@@ -226,16 +242,28 @@ class VAE_model(ModelAgent):
         all_dset = TensorDataset(X, y)
 
         kwargs = {'num_workers': 1, 'pin_memory': True}
-        self.train_loader = torch.utils.data.DataLoader(train_dset, batch_size=batch_size, shuffle=True, **kwargs)
-        self.test_loader = torch.utils.data.DataLoader(test_dset, batch_size=batch_size, shuffle=False, **kwargs)
-        self.all_loader = torch.utils.data.DataLoader(all_dset, batch_size=batch_size, shuffle=False, **kwargs)
+        self.train_loader = torch.utils.data.DataLoader(train_dset,
+                                                        batch_size=batch_size,
+                                                        shuffle=True,
+                                                        **kwargs)
+        self.test_loader = torch.utils.data.DataLoader(test_dset,
+                                                       batch_size=batch_size,
+                                                       shuffle=False,
+                                                       **kwargs)
+        self.all_loader = torch.utils.data.DataLoader(all_dset,
+                                                      batch_size=batch_size,
+                                                      shuffle=False,
+                                                      **kwargs)
 
     def train_vae(self, cuda=False, epochs=5, hidden_size=8, lr=1e-2):
         set_seed(42)  # Set the random seed
-        self.model = VAE(hidden_size, self.input.shape)  # Inititalize the model
+        self.model = VAE(hidden_size,
+                         self.input.shape)  # Inititalize the model
 
         # Create a gradient descent optimizer
-        optimizer = optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.999))
+        optimizer = optim.Adam(self.model.parameters(),
+                               lr=lr,
+                               betas=(0.9, 0.999))
 
         liveloss = PlotLosses()
         liveloss.skip_first = 0
@@ -244,8 +272,13 @@ class VAE_model(ModelAgent):
 
         # Start training loop
         for epoch in range(1, epochs + 1):
-            tl = train(epoch, self.model, optimizer, self.train_loader, cuda=False)  # Train model on train dataset
-            testl = test(epoch, self.model, self.test_loader, cuda=False)  # Validate model on test dataset
+            tl = train(epoch,
+                       self.model,
+                       optimizer,
+                       self.train_loader,
+                       cuda=False)  # Train model on train dataset
+            testl = test(epoch, self.model, self.test_loader,
+                         cuda=False)  # Validate model on test dataset
             #             %matplotlib inline
             logs = {}
             logs['' + 'ELBO'] = tl
@@ -260,7 +293,8 @@ class VAE_model(ModelAgent):
         print('\nVAE->UMAP representation initialised\n')
         transformer = umap.UMAP(n_neighbors=umap_neighbours,
                                 min_dist=umap_dist,
-                                metric='correlation', verbose=True).fit(self.zs.numpy())
+                                metric='correlation',
+                                verbose=True).fit(self.zs.numpy())
         embedding = transformer.transform(self.zs.numpy())
         print("\n\nVAE -> 2-D UMAP representation complete\n")
         return embedding
@@ -284,18 +318,24 @@ class VAE_model(ModelAgent):
 
         # Find 2-D embedding
         if hidden_size > 2:
-            self.embedding = self.vae_umap(umap_dist=umap_dist, umap_neighbours=umap_neighbours)
+            self.embedding = self.vae_umap(umap_dist=umap_dist,
+                                           umap_neighbours=umap_neighbours)
         elif hidden_size == 2:
             self.embedding = self.zs.numpy()
 
-#plot
+
+# plot
 def PlotAgent(model, attr='FF'):
     fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    ax.set(xlabel='Latent Variable 1', ylabel='Latent Variable 2',
-           title='Model used: {}, Trace Attribute: {}'.format(model.name, attr),
+    ax.set(xlabel='Latent Variable 1',
+           ylabel='Latent Variable 2',
+           title='Model used: {}, Trace Attribute: {}'.format(
+               model.name, attr),
            aspect='equal')
-    s = ax.scatter(model.embedding[:, 0], model.embedding[:, 1], s=1.0, c=model.attributes[attr])
+    s = ax.scatter(model.embedding[:, 0],
+                   model.embedding[:, 1],
+                   s=1.0,
+                   c=model.attributes[attr])
     c = plt.colorbar(s, shrink=0.7, orientation='vertical')
     c.set_label(label=attr, rotation=90, labelpad=10)
     plt.show()
-
