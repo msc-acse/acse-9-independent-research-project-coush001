@@ -1,5 +1,7 @@
 # SEISMIC REDUCTION 
-### Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation
+### Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ###
+
+The aim of this project is to deliver a set of tools to enable the efficient exploration of the potential use of unsupervised machine learning techniques for the analysis of seismic data sets specifically the recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
 ---
 
@@ -22,3 +24,13 @@ Base cases wich have been verified to give the expected result have been logged 
 
 ### Unit testing
 Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs
+
+## Built with:
+python 3
+
+## Contributing
+
+## Author
+Hugo Coussens
+
+## Liscense
