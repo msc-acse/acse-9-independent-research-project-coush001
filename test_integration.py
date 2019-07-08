@@ -2,10 +2,6 @@ import pytest
 from SeismicReduction import DataHolder, Processor, UMAP, VAE_model, set_seed, PlotAgent
 import numpy as np
 
-
-# set initial random seed for standardised testing
-set_seed(42)
-
 # loading data : very costly do once for all integration tests!
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 dataholder.add_near('./data/3d_nearstack.sgy');
@@ -15,6 +11,9 @@ dataholder.add_well('well_1', 36, 276//2)
 
 
 def test_base_case_UMAP():
+    # set initial random seed for standardised testing
+    set_seed(42)
+
     assert (dataholder.field_name == "Glitne")
 
     # process data for input
@@ -40,6 +39,9 @@ def test_base_case_UMAP():
 
 
 def test_base_case_VAE():
+    # set initial random seed for standardised testing
+    set_seed(42)
+
     # process data for input
     processor = Processor(dataholder)
     Input2 = processor([True, 12, 52], normalise=True)
