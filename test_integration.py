@@ -48,7 +48,7 @@ def test_base_case_VAE():
 
     # run the VAE model on input
     VAE_1 = VAE_model(Input2)
-    VAE_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=True)
+    VAE_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=False)
 
     # load base case
     VAE_base_case = np.load('test_cases/Flat-top12,bottom52,VAE-epochs5,latent2,lr0.01.npy')
