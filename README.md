@@ -41,5 +41,5 @@ python 3
 ## Author
 Hugo Coussens
 
-## Liscense
-[MIT liscense](LICENSE)
+## License
+[MIT license](LICENSE)
