@@ -1,18 +1,7 @@
 import pytest
-# from utils import *
 from SeismicReduction import DataHolder, Processor, UMAP, VAE_model, set_seed, PlotAgent
 import numpy as np
 
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
-    torch.backends.cudnn.benchmark = False  ##uses the inbuilt cudnn auto-tuner to find the fastest convolution algorithms. -
-    torch.backends.cudnn.enabled = False
-
-    return True
 
 # set initial random seed for standardised testing
 set_seed(42)
