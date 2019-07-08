@@ -1,5 +1,5 @@
 import pytest
-from SeismicReduction import VAE
+from SeismicReduction import VAE_model, VAE
 import torch
 
 def test_ok():
