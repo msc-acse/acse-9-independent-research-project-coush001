@@ -20,18 +20,19 @@ def test_base_case_UMAP():
     processor = Processor(dataholder)
     Input1 = processor([True, 12, 52], normalise=True)
 
-    # run the UMAP model on the input
+    # run the UMAP model on input
     UMAP_a = UMAP(Input1)
     UMAP_a.reduce(n_neighbors=50, min_dist=0.001)
 
     # load the documented base case result as np array
     UMAP_base_case = np.load('test_cases/Flat-top12,bottom52,UMAP-neigh50,dist0.001.npy')
+    PlotAgent(UMAP_a)
 
     # Base Case testing:
     assert (UMAP_base_case.shape == UMAP_a.embedding.shape), \
         'Output embedding array shape does not match base case embedding array shape'
 
-    assert((np.isclose(UMAP_base_case.shape,UMAP_a.embedding.shape, atol=0.01)).all()), \
+    assert((np.isclose(UMAP_base_case, UMAP_a.embedding, atol=0.1)).all()), \
         'The implementation does not match the base case for: \n' \
         'Flattened input : above 12, below 52, \n' \
         'UMAP reduction : Neighbours 50, min_dist: 0.001'
@@ -44,20 +45,20 @@ def test_base_case_VAE():
 
     # process data for input
     processor = Processor(dataholder)
-    Input2 = processor([True, 12, 52], normalise=True)
+    input2 = processor([True, 12, 52], normalise=True)
 
     # run the VAE model on input
-    VAE_1 = VAE_model(Input2)
-    VAE_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=False)
+    vae_1 = VAE_model(input2)
+    vae_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=False)
 
     # load base case
-    VAE_base_case = np.load('test_cases/Flat-top12,bottom52,VAE-epochs5,latent2,lr0.01.npy')
+    vae_base_case = np.load('test_cases/Flat-top12,bottom52,VAE-epochs5,latent2,lr0.01.npy')
 
     # Base case testing:
-    assert (VAE_base_case.shape == VAE_1.embedding.shape), \
+    assert (vae_base_case.shape == vae_1.embedding.shape), \
         'Output embedding array shape does not match base case embedding array shape.'
 
-    assert((VAE_base_case == VAE_1.embedding).all()), \
+    assert((vae_base_case == vae_1.embedding).all()), \
         'The implementation does not match the base case for: \n' \
         'Flattened input : above 12, below 52, \n' \
         'VAE reduction : Epochs 5, latent dimension 2, learning rate 0.01.'
