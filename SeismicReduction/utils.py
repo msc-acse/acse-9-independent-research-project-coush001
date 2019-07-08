@@ -1,3 +1,10 @@
+"""
+utils module containing various support functions for the running of the main processes
+
+"""
+
+
+# standard imports
 import numpy as np
 import random
 import scipy
@@ -7,12 +14,24 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-# File load and save imports
+# segy load and save tool
 import segypy
 
 
-# utils
+
 def set_seed(seed):
+    """
+    Set random seed for all relevant randomisation tools.
+
+    Parameters
+    ----------
+    seed : int
+        Random seed value
+
+    Returns
+    -------
+    None
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -25,6 +44,26 @@ def set_seed(seed):
 
 
 def load_seismic(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
+    """
+    Load seismic amplitudes from .SEGY into numpy array.
+
+    Parameters
+    ----------
+    filename : str
+        File pathname for .SEGY file.
+    inlines : list
+        List in form [start, stop, step] for data inlines.
+    xlines : list
+        List in form [start, stop, step] for data inlines.
+
+    Returns
+    -------
+    amplitude : array_like
+        Array of seismic amplitudes.
+    twt : array_like
+        Array of twt range for data.
+
+    """
     inl = np.arange(*inlines)
     crl = np.arange(*xlines)
     seis, header, trace_headers = segypy.readSegy(filename)
@@ -36,6 +75,23 @@ def load_seismic(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
 
 
 def load_horizon(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
+    """
+    Load horizon from .txt into numpy array.
+
+    Parameters
+    ----------
+    filename : str
+        File pathname to .txt file
+    inlines : list
+        List in form [start, stop, step] for data inlines.
+    xlines : list
+        List in form [start, stop, step] for data inlines.
+
+    Returns
+    -------
+    Numpy array of horizon depth.
+
+    """
     inl = np.arange(*inlines)
     crl = np.arange(*xlines)
     hrz = np.recfromtxt(filename, names=['il', 'xl', 'z'])
@@ -50,6 +106,20 @@ def load_horizon(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
 
 
 def interpolate_horizon(horizon):
+    """
+    Interpolates missing data in a horizon numpy array.
+
+    Parameters
+    ----------
+    horizon : array_like
+        horizon depth data.
+
+    Returns
+    -------
+    Interpolated array for full field coverage.
+
+    """
+
     points = []
     wanted = []
     for i in range(horizon.shape[0]):
@@ -70,39 +140,43 @@ def interpolate_horizon(horizon):
     return horizon
 
 
-#  VAE functions
 class VAE(nn.Module):
+    """
+    Pytorch compatible vae model implementation.
+    """
     def __init__(self, hidden_size, shape_in):
+        """
+        Define the architecture of VAE model.
+
+        Parameters
+        ----------
+        hidden_size : int
+            Size of the vae latent space.
+        shape_in : int
+            Size of the input dimension.
+        """
         super(VAE, self).__init__()
 
-        #         print('\nINNIT:\nDATA SHAPE:', shape_in)
         #  Architecture paramaters
-        shape = shape_in[-1]  #  /2 as will be split into near and far channels
-        #         print('dimension assumed after split:', shape)
-        assert shape % 4 == 0, 'input for VAE must be factor of 4'
+        shape = shape_in[-1]
+
+        assert shape % 4 == 0, 'input dimension for VAE must be factor of 4'
         reductions = [0.5, 0.5,
-                      0.5]  # specify reduction factor of each convolution
+                      0.5]  # specified reduction factor of each convolution
+
         self.last_conv_channels = 34  # number of channels after last convolution
 
-        # find the resultant dimension post convolutional layers
+        # find the resultant dimension post convolution layer processing
         post_conv = self.post_conv_dim(shape, reductions,
                                        self.last_conv_channels)
-        self.linear_dimension = post_conv * self.last_conv_channels
 
-        #         print('Reductions: {}, Number of Channels on last convultion: {}'.format(reductions, self.last_conv_channels))
-        #         print('Post Conv Dim:', post_conv)
-        #         print('Input * reductions * channels = Lin dimension:', self.linear_dimension)
-        #         print('\n')
+        self.linear_dimension = post_conv * self.last_conv_channels
 
         # Encoder
         self.conv1 = nn.Conv1d(2, 3, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv1d(3, 32, kernel_size=3, stride=2, padding=1)
         self.conv3 = nn.Conv1d(32, 32, kernel_size=3, stride=2, padding=1)
-        self.conv4 = nn.Conv1d(32,
-                               self.last_conv_channels,
-                               kernel_size=3,
-                               stride=2,
-                               padding=1)
+        self.conv4 = nn.Conv1d(32, self.last_conv_channels, kernel_size=3, stride=2, padding=1)
         self.fc1 = nn.Linear(self.linear_dimension, 128)
 
         # Latent space
@@ -133,14 +207,40 @@ class VAE(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def post_conv_dim(self, in_shape, conv_reductions, last_conv_channels):
-        """ Calculates the resultant dimension from convolutions"""
+        """
+        Calculates the dimension of the data at the end of convolutions.
+
+        Parameters
+        ----------
+        in_shape : int
+            Input dimension.
+        conv_reductions : list
+            List that specifies the reduction factor for each convolution, generally 1/stride of each layer.
+        last_conv_channels : int
+            Value of number of output channels of last convolution.
+
+        Returns
+        -------
+        int of dimension post convolutions.
+        """
         for i in conv_reductions:
             in_shape = int(np.ceil(
                 in_shape * i))  #  calc the resultant size from each conv
         return in_shape
 
     def encode(self, x):
-        #         print('in encode, shape:', x.shape)
+        """
+        Encode the input into latent space variables.
+
+        Parameters
+        ----------
+        x : array_like
+            Input data array.
+
+        Returns
+        -------
+        Latent space representation.
+        """
         out = self.relu(self.conv1(x))
         out = self.relu(self.conv2(out))
         out = self.relu(self.conv3(out))
@@ -153,29 +253,54 @@ class VAE(nn.Module):
         if self.training:
             std = logvar.mul(0.5).exp_()
             eps = Variable(std.data.new(std.size()).normal_())
-            if mu.is_cuda:
-                eps = eps.cuda()
             return eps.mul(std).add_(mu)
         else:
             return mu
 
     def decode(self, z):
+        """
+        Decode from latent space back into input dimension.
+
+        Parameters
+        ----------
+        z : array_like
+            Latent space representation.
+
+        Returns
+        -------
+        Reconstructed data array.
+        """
         h3 = self.relu(self.fc3(z))
         out = self.relu(self.fc4(h3))
-        #         print('in decode, shape before conv(expect linear):', out.shape)
         out = out.view(out.size(0), self.last_conv_channels,
                        int(self.linear_dimension / self.last_conv_channels))
-        #         print('in decode, after reshape for conv:', out.shape)
         out = self.relu(self.deconv1(out))
-        #         print('in decode, after conv1:', out.shape)
         out = self.relu(self.deconv2(out))
-        #         print('in decode, after conv2:', out.shape)
         out = self.relu(self.deconv3(out))
         out = self.conv5(out)
-        #         print('in decode, end shape:', out.shape)
         return out
 
     def forward(self, x):
+        """
+        __call__ function for the class.
+
+        Parameters
+        ----------
+        x : array_like
+            Model input data.
+
+        Returns
+        -------
+        decode : array_like
+            Reconstructed data in dimension of input.
+        mu : array_like
+            Latent space representation mean
+        logvar : array_like
+            Latent space representation variance
+        z : array_like
+            Latent space representation mean
+
+        """
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar, z
@@ -219,11 +344,6 @@ def train(epoch, model, optimizer, train_loader, cuda=False, log_interval=10):
         loss.backward()
         train_loss += loss.item() * data.size(0)
         optimizer.step()
-    #         if batch_idx % log_interval == 0:
-    #             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-    #                 epoch, batch_idx * len(data), len(train_loader.dataset),
-    #                        100. * batch_idx / len(train_loader),
-    #                        loss.item() * data.size(0) / len(train_loader.dataset)))
 
     train_loss /= len(train_loader.dataset)
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss))
