@@ -42,4 +42,4 @@ python 3
 Hugo Coussens
 
 ## Liscense
-[MIT liscense](https://github.com/msc-acse/acse-9-independent-research-project-coush001/LISCENSE 
+[MIT liscense](https://github.com/msc-acse/acse-9-independent-research-project-coush001/LISCENSE)
