@@ -15,7 +15,7 @@ The aim of this project is to deliver a set of tools to enable the efficient exp
 - use of the notebook GUI
 
 ### Documentation
-- [a relative link](https://github.com/msc-acse/acse-9-independent-research-project-coush001/tree/testing/index.html)
+- link to documentation
 
 ---
 
