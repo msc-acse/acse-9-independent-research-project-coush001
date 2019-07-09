@@ -87,23 +87,25 @@ Via the use of pickling (the python module that allows for saving and loading of
 ---
 
 ## Testing
-All testing will be included in the travis testing routine for continuous integration of features
+Continuous integration is deployed using the travis framework.
 
 ### Build Status
 [![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
 
 ### Integration testing
-Base cases wich have been verified to give the expected result have been logged and will be used in the integration tests to ensure the full analysis pipeline is working as expected
+Base cases wich have been verified to compare a run vs a documented and verified base case result are run in test_integration. These tests ensure the full analysis pipeline is working as expected and creating expected outputs.
+Despite the analysis being stochastic processess these are standardised with common random seed setting.
+
+Currently integration tests have to be run locally as there are some undiagnosed errors that appear when run with travis.
 
 ### Unit testing
-Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs
+Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs.
+These are particularly focussed on running checks on the shapes of inputs and outputs from the functions and methods to ensure the expected data is being generated in the correct way.
 
 ---
 
 ## Built with:
 python 3
-
-## Contributing
 
 ## Author
 Hugo Coussens
