@@ -665,6 +665,181 @@ class VAE_model(ModelAgent):
         elif hidden_size == 2:
             self.embedding = self.zs.numpy()
 
+class b_VAE_model(ModelAgent):
+    """
+    Runs the VAE model to reduce the seismic data to an arbitrary sized dimension, visualised in 2 via UMAP.
+    """
+    def __init__(self, data):
+        super().__init__(data)
+        self.name = 'beta_VAE'
+
+    def create_dataloader(self, batch_size=32):
+        """
+        Create pytorch data loaders for use in vae training, testing and running.
+
+        Parameters
+        ----------
+        batch_size : int
+            Size of data loader batches.
+
+        Returns
+        -------
+        Modifies object data loader attributes.
+
+        """
+        # create torch tensor
+        assert self.input.shape[1] == 2, 'Expected a three dimensional input with 2 channels'
+        X = torch.from_numpy(self.input).float()
+
+        # Create a stacked representation and a zero tensor so we can use the standard Pytorch TensorDataset
+        y = torch.from_numpy(np.zeros((X.shape[0], 1))).float()
+
+        split = ShuffleSplit(n_splits=1, test_size=0.5)
+        for train_index, test_index in split.split(X):
+            X_train, y_train = X[train_index], y[train_index]
+            X_test, y_test = X[test_index], y[test_index]
+
+        train_dset = TensorDataset(X_train, y_train)
+        test_dset = TensorDataset(X_test, y_test)
+        all_dset = TensorDataset(X, y)
+
+        kwargs = {'num_workers': 1, 'pin_memory': True}
+        self.train_loader = torch.utils.data.DataLoader(train_dset,
+                                                        batch_size=batch_size,
+                                                        shuffle=True,
+                                                        **kwargs)
+        self.test_loader = torch.utils.data.DataLoader(test_dset,
+                                                       batch_size=batch_size,
+                                                       shuffle=False,
+                                                       **kwargs)
+        self.all_loader = torch.utils.data.DataLoader(all_dset,
+                                                      batch_size=batch_size,
+                                                      shuffle=False,
+                                                      **kwargs)
+
+    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, beta=10):
+        """
+        Handles the training of the vae model.
+
+        Parameters
+        ----------
+        epochs : int
+            Number of complete passes over the whole training set.
+        hidden_size : int
+            Size of the latent space of the vae.
+        lr : float.
+            Learning rate for the vae model training.
+
+        Returns
+        -------
+        None
+
+        """
+        set_seed(42)  # Set the random seed
+        self.model = VAE(hidden_size,
+                         self.input.shape)  # Inititalize the model
+
+        # Create a gradient descent optimizer
+        optimizer = optim.Adam(self.model.parameters(),
+                               lr=lr,
+                               betas=(0.9, 0.999))
+
+        if self.plot_loss:
+            liveloss = PlotLosses()
+            liveloss.skip_first = 0
+            liveloss.figsize = (16, 10)  # , fig_path=self.path
+
+        # Start training loop
+        for epoch in range(1, epochs + 1):
+            tl = train(epoch,
+                       self.model,
+                       optimizer,
+                       self.train_loader,
+                       cuda=False, beta=beta)  # Train model on train dataset
+            testl = test(epoch, self.model, self.test_loader,
+                         cuda=False, beta=beta)  # Validate model on test dataset
+
+            if self.plot_loss:
+                logs = {}
+                logs['' + 'ELBO'] = tl
+                logs['val_' + 'ELBO'] = testl
+                liveloss.update(logs)
+                liveloss.draw()
+
+    def run_vae(self):
+        """
+        Run the full data set through the trained vae model.
+
+        Returns
+        -------
+        Modifies the zs attribute, an array of shape (number_traces, latent_space)
+        """
+        _, self.zs = forward_all(self.model, self.all_loader, cuda=False)
+
+    def vae_umap(self, umap_neighbours=50, umap_dist=0.001):
+        """
+        Takes abritrary dimension of vae latent space and converts to two dimensions via umap.
+
+        Parameters
+        ----------
+        umap_neighbours : int
+            Control over local vs global structure representation. see UMAP class for more detailed description.
+        umap_dist : float
+            Control on minimum distance of output representations, see again UMAP class for more detailed description.
+
+        Returns
+        -------
+        embedding : array_like
+            Two dimensional representation of the vae latent space.
+        """
+        print('\nVAE->UMAP representation initialised\n')
+        transformer = umap.UMAP(n_neighbors=umap_neighbours,
+                                min_dist=umap_dist,
+                                metric='correlation',
+                                verbose=True).fit(self.zs.numpy())
+        embedding = transformer.transform(self.zs.numpy())
+        print("\n\nVAE -> 2-D UMAP representation complete\n")
+        return embedding
+
+    def reduce(self, epochs, hidden_size, lr, beta, umap_neighbours, umap_dist, plot_loss=True):
+        """
+        Controller function for the vae model.
+
+        Parameters
+        ----------
+        epochs : int
+            Number of epochs to run vae model.
+        hidden_size : int
+            Size of the vae model latent space representation.
+        lr : float
+            Learning rate for vae model training.
+        umap_neighbours : int
+            UMAP algorithm n_neighbours parameter.
+        umap_dist : float
+            UMAP algorithm min_dist parameter.
+        plot_loss : bool
+            Control on whether to plot the loss on vae training.
+
+        Returns
+        -------
+        Modifies embedding attribute via generation of the low dimensional representation.
+
+        """
+        if hidden_size < 2: raise Exception('Please use hidden size > 1')
+
+        self.plot_loss = plot_loss  # define whether to plot training losses or not
+
+        self.create_dataloader()
+        self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
+        self.run_vae()
+
+        # Find 2-D embedding
+        if hidden_size > 2:
+            self.embedding = self.vae_umap(umap_dist=umap_dist,
+                                           umap_neighbours=umap_neighbours)
+        elif hidden_size == 2:
+            self.embedding = self.zs.numpy()
+
 
 # plot
 def PlotAgent(model, attr='FF'):

@@ -306,10 +306,8 @@ class VAE(nn.Module):
         return self.decode(z), mu, logvar, z
 
 
-def loss_function(recon_x, x, mu, logvar, window_size):
+def loss_function(recon_x, x, mu, logvar, window_size, beta=1):
     criterion_mse = nn.MSELoss(size_average=False)
-    #     print('in loss func, window_size:', window_size)
-    #     print('in loss func, x shape:', x.shape, recon_x.shape)
     MSE = criterion_mse(recon_x.view(-1, 2, window_size),
                         x.view(-1, 2, window_size))
 
@@ -319,11 +317,11 @@ def loss_function(recon_x, x, mu, logvar, window_size):
     # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return MSE + KLD
+    return MSE + beta * KLD
 
 
 # Function to perform one epoch of training
-def train(epoch, model, optimizer, train_loader, cuda=False, log_interval=10):
+def train(epoch, model, optimizer, train_loader, cuda=False, beta=1):
     model.train()
     train_loss = 0
     for batch_idx, (data, _) in enumerate(train_loader):
@@ -340,7 +338,7 @@ def train(epoch, model, optimizer, train_loader, cuda=False, log_interval=10):
                              data,
                              mu,
                              logvar,
-                             window_size=data.shape[-1])
+                             window_size=data.shape[-1], beta=beta)
         loss.backward()
         train_loss += loss.item() * data.size(0)
         optimizer.step()
@@ -351,7 +349,7 @@ def train(epoch, model, optimizer, train_loader, cuda=False, log_interval=10):
 
 
 # Function to perform evaluation of data on the model, used for testing
-def test(epoch, model, test_loader, cuda=False, log_interval=10):
+def test(epoch, model, test_loader, cuda=False, beta=1):
     model.eval()
     test_loss = 0
     with torch.set_grad_enabled(False):
@@ -361,7 +359,7 @@ def test(epoch, model, test_loader, cuda=False, log_interval=10):
             data = Variable(data)
             recon_batch, mu, logvar, _ = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar,
-                                       data.shape[-1]).item() * data.size(0)
+                                       data.shape[-1], beta=beta).item() * data.size(0)
 
         test_loss /= len(test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(test_loss))
