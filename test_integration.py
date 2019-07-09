@@ -58,7 +58,7 @@ def test_base_case_VAE():
     assert (vae_base_case.shape == vae_1.embedding.shape), \
         'Output embedding array shape does not match base case embedding array shape.'
 
-    assert((vae_base_case == vae_1.embedding).all()), \
+    assert((np.isclose(vae_base_case, vae_1.embedding, atol=0.1)).all()), \
         'The implementation does not match the base case for: \n' \
         'Flattened input : above 12, below 52, \n' \
         'VAE reduction : Epochs 5, latent dimension 2, learning rate 0.01.'

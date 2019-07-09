@@ -93,7 +93,6 @@ class DataHolder:
                                       inlines=self.inlines,
                                       xlines=self.xlines)
         self.twt = twt
-
         return
 
     def add_far(self, fname):
