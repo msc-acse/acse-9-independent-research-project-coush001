@@ -19,16 +19,6 @@ import SeismicReduction
 ```
 
 ### Example Usage:
-#### Notebook GUI:
-A jupyter notebook GUI that captures all of the tools functionality has been created and is available for download from this repo *'GUI_tool.ipynb'*.
-
-The tool is delivered via jupyter widgets and follows a self explanatory workflow:
-- Data Loading
-- Data processing
-- Model analysis
-- Visualisation
-
-Via the use of pickling (the python module that allows for saving of python objects) the analysis can be run in a segmented fashion. For example it is only necessary to load the data once, this can then be processed in a number of ways and in turn a number of different models can be run on one set of processed data.
 
 #### Direct python scripting:
 
@@ -83,8 +73,16 @@ PlotAgent(vae_1, "FF")
 PlotAgent(umap)
 ```
 
+#### Notebook GUI:
+A jupyter notebook GUI that captures all of the tools functionality without need to edit code has been created and is available for download from this repo *'GUI_tool.ipynb'*.
+
+The tool is delivered via jupyter widgets and follows the same workflow as the api tools:
+- Data Loading->Data processing->Model analysis->Visualisation.
+
+Via the use of pickling (the python module that allows for saving and loading of python objects) the analysis can be run in a segmented fashion. For example it is only necessary to load the data once, this can then be processed in a number of ways and in turn a number of different models can be run on one set of processed data.
+
 ### Documentation
-- link to documentation
+- Detailed documentation of all python functions and classess.
 
 ---
 
