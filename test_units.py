@@ -1,5 +1,5 @@
 import pytest
-from SeismicReduction import VAE_model, VAE, DataHolder, Processor
+from SeismicReduction import VAE_model, VAE, UMAP, DataHolder, Processor
 import torch
 
 
