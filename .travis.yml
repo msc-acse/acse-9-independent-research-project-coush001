@@ -7,5 +7,5 @@ install:
 #  - pip install .
 # command to run tests
 script:
-  pytest test_units.py test_integration.py
+  pytest test_units.py
 
