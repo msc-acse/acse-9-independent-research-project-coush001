@@ -55,8 +55,15 @@ def test_Processor_create_correct_shape_output():
 
 
 def test_VAE_model():
-
+    vae = VAE_model(flat_input)
+    vae.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=False)
+    assert(vae.embedding.shape[1] == 2), \
+        'Resultant analysis dimension is not equal to two'
     return 1
 
 def test_UMAP():
+    umap = UMAP(flat_input)
+    umap.reduce(n_neighbors=10, min_dist=0.1)
+    assert(umap.embedding.shape[1] == 2), \
+        'Resultant analysis dimension is not equal to two'
     return 1
