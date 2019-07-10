@@ -461,6 +461,7 @@ class ModelAgent:
         self.input_dimension = self.input.shape[-1]
         self.embedding = None  # intermediate embedding from model
         self.two_dimensions = None  # final output for visualisation
+        self.loaded_model = False  # define whether this object is for loading or training a model
         print("ModelAgent initialised")
 
     def concat(self):
@@ -506,6 +507,13 @@ class ModelAgent:
 
         return
 
+    def save_nn(self, path):
+        torch.save(self.model, path)
+
+    def load_nn(self, path):
+        self.loaded_model = True
+        self.model = torch.load(path)
+
 
 class PcaModel(ModelAgent):
     """
@@ -531,6 +539,12 @@ class PcaModel(ModelAgent):
 
         self.embedding = p_components
 
+    def save_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
+    def load_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
 
 class UmapModel(ModelAgent):
     """
@@ -548,6 +562,12 @@ class UmapModel(ModelAgent):
 
         """
         self.embedding = self.concat()  # collapse the near far data into 1 dimension
+
+    def save_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
+    def load_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
 
 
 class VaeModel(ModelAgent):
@@ -662,7 +682,7 @@ class VaeModel(ModelAgent):
         _, zs = forward_all(self.model, self.all_loader, cuda=False)
         return zs.numpy()
 
-    def reduce(self, epochs, hidden_size, lr, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -689,9 +709,11 @@ class VaeModel(ModelAgent):
         if hidden_size < 2: raise Exception('Please use hidden size > 1')
 
         self.plot_loss = plot_loss  # define whether to plot training losses or not
-
         self.create_dataloader()
-        self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr)
+
+        if not self.loaded_model:
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr)
+
         self.embedding = self.run_vae()  # arb dim output from VAE
 
 
@@ -808,7 +830,7 @@ class BVaeModel(ModelAgent):
         _, zs = forward_all(self.model, self.all_loader, cuda=False)
         return zs.numpy()
 
-    def reduce(self, epochs, hidden_size, lr, beta, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, beta=5, plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -834,8 +856,11 @@ class BVaeModel(ModelAgent):
             raise Exception('Please use hidden size > 1')
 
         self.plot_loss = plot_loss  # define whether to plot training losses or not
-        self.create_dataloader()
-        self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
+        self.create_dataloader()  # create datasets
+
+        if not self.loaded_model:
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
+
         self.embedding = self.run_vae()  # arb dimension output from bVAE
 
 
