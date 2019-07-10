@@ -93,8 +93,7 @@ Continuous integration is deployed using the travis framework.
 [![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
 
 ### Integration testing
-Base cases wich have been verified to compare a run vs a documented and verified base case result are run in test_integration. These tests ensure the full analysis pipeline is working as expected and creating expected outputs.
-Despite the analysis being stochastic processess these are standardised with common random seed setting.
+Integration testing involves running an anaylis using the current state of software and compares the final output against a documented and verified base case result. These tests ensure the full analysis pipeline is working as expected and is creating the expected outputs. Due to the stochastic nature of the algorithms, these are standardised with random seed setting.
 
 Currently integration tests have to be run locally as there are some undiagnosed errors that appear when run with travis.
 
