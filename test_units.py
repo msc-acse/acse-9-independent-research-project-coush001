@@ -65,6 +65,6 @@ def test_UMAP():
     umap = UmapModel(flat_input)
     umap.reduce()
     umap.to_2d(umap_neighbours=50, umap_dist=0.01)
-    assert(umap.two_dimensions == 2), \
+    assert(umap.two_dimensions.shape[1] == 2), \
         'Resultant analysis dimension is not equal to two'
     return 1
