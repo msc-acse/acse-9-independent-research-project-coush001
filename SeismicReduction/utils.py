@@ -310,7 +310,7 @@ def loss_function(recon_x, x, mu, logvar, window_size, beta=1):
     criterion_mse = nn.MSELoss(size_average=False)
     MSE = criterion_mse(recon_x.view(-1, 2, window_size),
                         x.view(-1, 2, window_size))
-
+    #TODO try cross entropy
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
     # https://arxiv.org/abs/1312.6114
@@ -326,14 +326,12 @@ def train(epoch, model, optimizer, train_loader, cuda=False, beta=1):
     train_loss = 0
     for batch_idx, (data, _) in enumerate(train_loader):
         data = Variable(data)
-        #         print(data.shape)
 
         if cuda:
             data = data.cuda()
 
         optimizer.zero_grad()
         recon_batch, mu, logvar, _ = model(data)
-        #         print('In train, data shape:', print(data.shape))
         loss = loss_function(recon_batch,
                              data,
                              mu,
@@ -344,7 +342,7 @@ def train(epoch, model, optimizer, train_loader, cuda=False, beta=1):
         optimizer.step()
 
     train_loss /= len(train_loader.dataset)
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss))
+    # print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss))
     return train_loss
 
 
@@ -362,7 +360,7 @@ def test(epoch, model, test_loader, cuda=False, beta=1):
                                        data.shape[-1], beta=beta).item() * data.size(0)
 
         test_loss /= len(test_loader.dataset)
-        print('====> Test set loss: {:.4f}'.format(test_loss))
+        # print('====> Test set loss: {:.4f}'.format(test_loss))
     return test_loss
 
 
