@@ -19,6 +19,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import ShuffleSplit
+from sklearn.decomposition import PCA
 
 # File load and save imports
 from .utils import *
@@ -213,7 +214,7 @@ class Processor:
         horizon = self.attributes['horizon_raw']
 
         # input data = [near(twt, x1, x2),far(twt, x1, x2)]
-        for amplitude in data:
+        for offset in data:
             # create output trace shape for each set in shape: (twt, x1, x2)
             traces = np.zeros(
                 (top_add + below_add, horizon.shape[0], horizon.shape[1]))
@@ -224,12 +225,37 @@ class Processor:
                 ]
                 for j in range(horizon.shape[1]):
                     # place the amplitudes from above:below horizon into 1st index
-                    traces[:, i, j] = amplitude[hrz_idx[j] -
-                                                top_add:hrz_idx[j] +
-                                                below_add, i, j]
+                    traces[:, i, j] = offset[hrz_idx[j] - top_add:hrz_idx[j] + below_add, i, j]
             out.append(traces)
 
         return out  # list of far and near, flattened amplitudes shape (twt, x1,x2)
+
+    def trim(self, data, top_index=0, bottom_index=232):
+        """
+        Without flattening retrieve a vertically cropped segment of the seismic block.
+
+        Parameters
+        ----------
+        data : array_like
+            List amplitudes in the form [far, near]
+            Each set expected to be of shape (twt,x1,x2)
+        top_index : int
+            Index for top of data.
+        bottom_index : int
+            Index for the bottom of the data
+
+        Returns
+        -------
+        Seismic amplitudes from top_index to bottom_index
+        """
+        out = []
+
+        # input data = [near(twt, x1, x2),far(twt, x1, x2)]
+        for offset in data:
+            traces = offset[top_index:bottom_index, :, :]
+            out.append(traces)
+
+        return out  # list of far and near, cropped amplitudes shape (twt, x1,x2)
 
     def roll_axis(self, data):
         """
@@ -378,10 +404,14 @@ class Processor:
         """
         self.out = copy.copy(self.raw)  # Set out attribute to raw data
 
-        if flatten[0]:  # Flatten samples
+        if flatten[0]:  # Flatten samples with top add, and bellow add
             self.out = self.flatten(self.out, flatten[1], flatten[2])
 
-        self.out = self.roll_axis(self.out)  # Reorder axis of data
+        else:
+            # trim seismic from flatten[1] to flatten[2]
+            self.out = self.trim(self.out, flatten[1], flatten[2])
+
+        self.out = self.roll_axis(self.out)  # Reorder axis of data to [x1,x2,twt]
 
         if normalise:  # Normalise samples
             self.out = self.normalise(self.out)
@@ -428,19 +458,11 @@ class ModelAgent:
         """
         self.input = data[0]
         self.attributes = data[1]
-        self.embedding = None
         self.input_dimension = self.input.shape[-1]
-
+        self.embedding = None  # intermediate embedding from model
+        self.two_dimensions = None  # final output for visualisation
+        self.loaded_model = False  # define whether this object is for loading or training a model
         print("ModelAgent initialised")
-
-
-class UMAP(ModelAgent):
-    """
-    Runs the UMAP algorithm to reduce dimensionality of input to two dimensions.
-    """
-    def __init__(self, data):
-        super().__init__(data)
-        self.name = 'UMAP'
 
     def concat(self):
         """
@@ -448,49 +470,107 @@ class UMAP(ModelAgent):
 
         Returns
         -------
-        Modifies input attribute into two dimensional array.
+        Modifies input from three to two dimensional array.
         """
-        self.input = self.input.reshape(-1, 2 * self.input_dimension)
-        print('to enter UMAP:', self.input.shape)
+        return self.input.reshape(-1, 2 * self.input_dimension)
 
-    def reduce(self, n_neighbors=50, min_dist=0.001):
+    def to_2d(self, umap_neighbours=50, umap_dist=0.001, verbose=False):
         """
-        Controller method for the dimensionality reduction routine.
+        Takes abritrary dimension of embedding and converts to two dimensions via umap.
 
         Parameters
         ----------
-        n_neighbors : int
-            "This parameter controls how UMAP balances local versus global structure in the data.
-            It does this by constraining the size of the local neighborhood UMAP will look at when attempting to learn
-             the manifold structure of the data. This means that low values of n_neighbors
-              will force UMAP to concentrate on very local structure (potentially to the detriment of the big picture),
-               while large values will push UMAP to look at larger neighborhoods of each point when estimating
-                the manifold structure of the data, losing fine detail structure for the sake of getting
-                 the broader of the data." - https://umap-learn.readthedocs.io/en/latest/parameters.html
-        min_dist : float
-            "The min_dist parameter controls how tightly UMAP is allowed to pack points together.
-             It, quite literally, provides the minimum distance apart that points are allowed to be
-              in the low dimensional representation" - https://umap-learn.readthedocs.io/en/latest/parameters.html
+        umap_neighbours : int
+            Control over local vs global structure representation. see UMAP class for more detailed description.
+        umap_dist : float
+            Control on minimum distance of output representations, see again UMAP class for more detailed description.
+
+        Returns
+        -------
+        embedding : array_like
+            Two dimensional representation of the model embedding.
+        """
+
+        if self.embedding.shape[1] == 2:
+            print('NOTE: embedding already reduced to 2D latent space, UMAP will not be run')
+            self.two_dimensions = self.embedding
+
+        else:
+            print('\n2D UMAP representation of {} embedding initialised:'.format(self.name))
+            print('\tInput dimension:', self.embedding.shape)
+            transformer = umap.UMAP(n_neighbors=umap_neighbours,
+                                    min_dist=umap_dist,
+                                    metric='correlation',
+                                    verbose=verbose).fit(self.embedding)
+            self.two_dimensions = transformer.transform(self.embedding)
+            print("\t2-D UMAP representation complete\n")
+
+        return
+
+    def save_nn(self, path):
+        torch.save(self.model, path)
+
+    def load_nn(self, path):
+        self.loaded_model = True
+        self.model = torch.load(path)
+
+
+class PcaModel(ModelAgent):
+    """
+    Runs the PCA algorithm to reduce dimensionality of input to two dimensions.
+    """
+    def __init__(self, data):
+        super().__init__(data)
+        self.name = 'PCA'
+
+    def reduce(self, n_components=2):
+        """
+        Controller method for the dimensionality reduction routine.
 
         Returns
         -------
         Modifies embedding attribute via generation of the low dimensional representation.
 
         """
-        self.concat()  # collapse the near far data into 1 dimension
+        concat_near_far = self.concat()  # collapse the near far data into 1 dimension
 
-        embedding = umap.UMAP(n_neighbors=n_neighbors,
-                              min_dist=min_dist,
-                              metric='correlation',
-                              verbose=False,
-                              random_state=42).fit_transform(self.input)
+        pca_model = PCA(n_components=n_components)
+        p_components = pca_model.fit_transform(concat_near_far)
 
-        self.embedding = embedding
+        self.embedding = p_components
 
-        print("UMAP 2-D representation complete")
+    def save_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
+    def load_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
 
 
-class VAE_model(ModelAgent):
+class UmapModel(ModelAgent):
+    """
+    Runs the UMAP algorithm to reduce dimensionality of input to two dimensions.
+    """
+    def __init__(self, data):
+        super().__init__(data)
+        self.name = 'UMAP'
+
+    def reduce(self):
+        """
+        Prepare self.embedding for umap_2d method.
+
+       Concatenate the near/far offset amplitudes to generate 2d array for the umap model.
+
+        """
+        self.embedding = self.concat()  # collapse the near far data into 1 dimension
+
+    def save_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
+    def load_nn(self, name):
+        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+
+
+class VaeModel(ModelAgent):
     """
     Runs the VAE model to reduce the seismic data to an arbitrary sized dimension, visualised in 2 via UMAP.
     """
@@ -599,34 +679,10 @@ class VAE_model(ModelAgent):
         -------
         Modifies the zs attribute, an array of shape (number_traces, latent_space)
         """
-        _, self.zs = forward_all(self.model, self.all_loader, cuda=False)
+        _, zs = forward_all(self.model, self.all_loader, cuda=False)
+        return zs.numpy()
 
-    def vae_umap(self, umap_neighbours=50, umap_dist=0.001):
-        """
-        Takes abritrary dimension of vae latent space and converts to two dimensions via umap.
-
-        Parameters
-        ----------
-        umap_neighbours : int
-            Control over local vs global structure representation. see UMAP class for more detailed description.
-        umap_dist : float
-            Control on minimum distance of output representations, see again UMAP class for more detailed description.
-
-        Returns
-        -------
-        embedding : array_like
-            Two dimensional representation of the vae latent space.
-        """
-        print('\nVAE->UMAP representation initialised\n')
-        transformer = umap.UMAP(n_neighbors=umap_neighbours,
-                                min_dist=umap_dist,
-                                metric='correlation',
-                                verbose=True).fit(self.zs.numpy())
-        embedding = transformer.transform(self.zs.numpy())
-        print("\n\nVAE -> 2-D UMAP representation complete\n")
-        return embedding
-
-    def reduce(self, epochs, hidden_size, lr, umap_neighbours, umap_dist, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -653,19 +709,15 @@ class VAE_model(ModelAgent):
         if hidden_size < 2: raise Exception('Please use hidden size > 1')
 
         self.plot_loss = plot_loss  # define whether to plot training losses or not
-
         self.create_dataloader()
-        self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr)
-        self.run_vae()
 
-        # Find 2-D embedding
-        if hidden_size > 2:
-            self.embedding = self.vae_umap(umap_dist=umap_dist,
-                                           umap_neighbours=umap_neighbours)
-        elif hidden_size == 2:
-            self.embedding = self.zs.numpy()
+        if not self.loaded_model:
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr)
 
-class b_VAE_model(ModelAgent):
+        self.embedding = self.run_vae()  # arb dim output from VAE
+
+
+class BVaeModel(ModelAgent):
     """
     Runs the VAE model to reduce the seismic data to an arbitrary sized dimension, visualised in 2 via UMAP.
     """
@@ -727,9 +779,10 @@ class b_VAE_model(ModelAgent):
             Number of complete passes over the whole training set.
         hidden_size : int
             Size of the latent space of the vae.
-        lr : float.
+        lr : float
             Learning rate for the vae model training.
-
+        beta : float
+            Beta value adjusts the weight of importance in KLD term in loss function
         Returns
         -------
         None
@@ -774,34 +827,10 @@ class b_VAE_model(ModelAgent):
         -------
         Modifies the zs attribute, an array of shape (number_traces, latent_space)
         """
-        _, self.zs = forward_all(self.model, self.all_loader, cuda=False)
+        _, zs = forward_all(self.model, self.all_loader, cuda=False)
+        return zs.numpy()
 
-    def vae_umap(self, umap_neighbours=50, umap_dist=0.001):
-        """
-        Takes abritrary dimension of vae latent space and converts to two dimensions via umap.
-
-        Parameters
-        ----------
-        umap_neighbours : int
-            Control over local vs global structure representation. see UMAP class for more detailed description.
-        umap_dist : float
-            Control on minimum distance of output representations, see again UMAP class for more detailed description.
-
-        Returns
-        -------
-        embedding : array_like
-            Two dimensional representation of the vae latent space.
-        """
-        print('\nVAE->UMAP representation initialised\n')
-        transformer = umap.UMAP(n_neighbors=umap_neighbours,
-                                min_dist=umap_dist,
-                                metric='correlation',
-                                verbose=True).fit(self.zs.numpy())
-        embedding = transformer.transform(self.zs.numpy())
-        print("\n\nVAE -> 2-D UMAP representation complete\n")
-        return embedding
-
-    def reduce(self, epochs, hidden_size, lr, beta, umap_neighbours, umap_dist, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, beta=5, plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -813,10 +842,8 @@ class b_VAE_model(ModelAgent):
             Size of the vae model latent space representation.
         lr : float
             Learning rate for vae model training.
-        umap_neighbours : int
-            UMAP algorithm n_neighbours parameter.
-        umap_dist : float
-            UMAP algorithm min_dist parameter.
+        beta : float
+            Beta value adjusts the weight of importance in KLD term in loss function
         plot_loss : bool
             Control on whether to plot the loss on vae training.
 
@@ -825,24 +852,19 @@ class b_VAE_model(ModelAgent):
         Modifies embedding attribute via generation of the low dimensional representation.
 
         """
-        if hidden_size < 2: raise Exception('Please use hidden size > 1')
+        if hidden_size < 2:
+            raise Exception('Please use hidden size > 1')
 
         self.plot_loss = plot_loss  # define whether to plot training losses or not
+        self.create_dataloader()  # create datasets
 
-        self.create_dataloader()
-        self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
-        self.run_vae()
+        if not self.loaded_model:
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
 
-        # Find 2-D embedding
-        if hidden_size > 2:
-            self.embedding = self.vae_umap(umap_dist=umap_dist,
-                                           umap_neighbours=umap_neighbours)
-        elif hidden_size == 2:
-            self.embedding = self.zs.numpy()
+        self.embedding = self.run_vae()  # arb dimension output from bVAE
 
 
-# plot
-def PlotAgent(model, attr='FF'):
+def plot_agent(model, attr='FF'):
     """
     Plots a low dimensional representation of seismic data found via model analysis.
 
@@ -852,7 +874,7 @@ def PlotAgent(model, attr='FF'):
         ModelAgent instance that has been run via the reduce method of the daughter class.
         This ensures the model has been run and the embedding attribute has been created.
     attr : str
-        Represents the key for the attributes dictionary. Controls the attribute to be represented via a colorscale
+        Represents the key for the attributes dictionary. Controls the attribute to be represented via a colour-scale
         in the resulting plot.
 
     Returns
@@ -866,11 +888,11 @@ def PlotAgent(model, attr='FF'):
            title='Model used: {}, Trace Attribute: {}'.format(
                model.name, attr),
            aspect='equal')
-    s = ax.scatter(model.embedding[:, 0],
-                   model.embedding[:, 1],
+    scatter = ax.scatter(model.two_dimensions[:, 0],
+                   model.two_dimensions[:, 1],
                    s=1.0,
                    c=model.attributes[attr])
-    c = plt.colorbar(s, shrink=0.7, orientation='vertical')
-    c.set_label(label=attr, rotation=90, labelpad=10)
+    cbar = plt.colorbar(scatter, shrink=0.7, orientation='vertical')
+    cbar.set_label(label=attr, rotation=90, labelpad=10)
     plt.show()
-    return s
+    return scatter

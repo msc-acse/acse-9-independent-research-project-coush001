@@ -1,5 +1,5 @@
 import pytest
-from SeismicReduction import VAE_model, VAE, UMAP, DataHolder, Processor
+from SeismicReduction import VaeModel, VAE, UmapModel, DataHolder, Processor, PcaModel, BVaeModel
 import torch
 
 
@@ -12,7 +12,7 @@ dataholder.add_well('well_1', 36, 276 // 2)
 
 # processor
 processor = Processor(dataholder)
-not_flat_input = processor([False, 1000, 1000], True)
+not_flat_input = processor([False, 0, 232], True)
 flat_input = processor([True, 12, 12], True)
 
 def test_utils_VAE():
@@ -42,7 +42,7 @@ def test_Processor_create_correct_shape_output():
         'Expected 2 in input second dimension'
 
     # check the dimension of unflattened traces matches input
-    assert(not_flat_input[0].shape[2] == dataholder.near.shape[0]), \
+    assert(not_flat_input[0].shape[2] == 232), \
         'Unflattened processed traces should have same length as input traces.'
     # check flattened traces has expected dimension (below add + above add)
     assert(flat_input[0].shape[2] == 24), \
@@ -55,15 +55,16 @@ def test_Processor_create_correct_shape_output():
 
 
 def test_VAE_model():
-    vae = VAE_model(flat_input)
-    vae.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=False)
+    vae = VaeModel(flat_input)
+    vae.reduce(epochs=5, hidden_size=2, lr=1e-2, plot_loss=False)
     assert(vae.embedding.shape[1] == 2), \
         'Resultant analysis dimension is not equal to two'
     return 1
 
 def test_UMAP():
-    umap = UMAP(flat_input)
-    umap.reduce(n_neighbors=10, min_dist=0.1)
-    assert(umap.embedding.shape[1] == 2), \
+    umap = UmapModel(flat_input)
+    umap.reduce()
+    umap.to_2d(umap_neighbours=50, umap_dist=0.01)
+    assert(umap.two_dimensions.shape[1] == 2), \
         'Resultant analysis dimension is not equal to two'
     return 1
