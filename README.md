@@ -1,7 +1,7 @@
 # SEISMIC REDUCTION 
 ## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ##
 
-This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. The tools allow for recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
+This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. Specifically the tools allow for efficient recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
 ---
 
@@ -38,46 +38,63 @@ There are two ways to utilise the software, each with different merits:
     * Quick and easy to run an analysis with a few button clicks without having to write code.
     * Pickle checkpointing allows for quick runs without having to repeat costly dataloading (similar benefits with Jupyter cells)
   
+---
 
-### 1. Direct python scripting:
+## 1. Direct python scripting:
 
 The tool is delivered via a series of classes delivering the following workflow:
-1. Data Loading
-2. Data processing
-3. Model analysis
+1. Imports
+2. Data Loading
+3. Data processing
+4. Model analysis
   1. Model embedding to a chosen dimension *Example: PCA, VAE..*
   2. Umap embedding to two dimensions
-4. Visualisation
+5. Visualisation
   1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
 
-#### Work Flow:
+## Work Flow:
 
-##### 1.1 Importing
+### 1.1 Importing
+Run in the standard way. Can also choose to import individual classes but there isn't many so the namespace will not be swamped.
 ```python
 from SeismicReduction import *
 ```
-##### 1.2 Data loading
+### 1.2 Data loading
+Data loading is done via the **DataHolder** class. <br>
+Initialisation takes three parameters
+1. Dataset name : self explanatory
+2. inline range : in the form [start, stop, step]
+3. inline range : in the form [start, stop, step] <br>
+*if using test dataset use the below ranges, if using new data check the info documentation for this*
 ```python
-# initiate data holder with arbritary name, inline range, and cross-line range
+# init
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
-
+```
+Loading the near and far offset amplitudes files is self explanatory, use the relative pathname of the files. <br>
+*files **must** be in .sgy format*
+```python
 # add near and far offset amplitudes
 dataholder.add_near('./data/3d_nearstack.sgy');
 dataholder.add_far('./data/3d_farstack.sgy');
-
+```
+Loading the horizon, information must be in .txt with columns: inline, crossline, twt 
+```python
 # add the horizon depth
 dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 ```
-##### 1.3 Data processing
+### 1.3 Data processing
+Uses class **Processor**. A processor only needs to be initialised **once** per dataset, the parameter is the DataHolder object. <br>
 ```python
 # Create a processor object for the data
 processor = Processor(dataholder)
-
+```
+An input is generated from the object ____call____ 
+```python
 # Generate an output, first param specifies flattening procedure, second specifies normalisation
 input2 = processor([True, 12, 52], normalise=True)
 ```
-##### 1.4 Unsupervised model analysis
+### 1.4 Model analysis
 ```python
 # run a VAE model on the input
 vae_1 = VAE_model(input2)
@@ -88,10 +105,10 @@ umap = UMAP(Input1)
 umap.reduce(n_neighbors=50, min_dist=0.001)
 ```
 
-##### 1.5 Two dimension UMAP embedding
+### 1.4.2 Two dimension UMAP embedding
 
 
-##### Visualisation
+### 1.5 Visualisation
 ```python
 # Plot the vae_1 representation with the AVO fluid factor attribute overlain
 PlotAgent(vae_1, "FF")
@@ -100,7 +117,9 @@ PlotAgent(vae_1, "FF")
 PlotAgent(umap)
 ```
 
-#### 2. Notebook GUI:
+---
+
+## 2. Notebook GUI:
 A jupyter notebook GUI that captures all of the tools functionality without need to edit code has been created and is available for download from this repo *'GUI_tool.ipynb'*.
 
 The tool is delivered via jupyter widgets and follows the same workflow as the api tools:
@@ -108,10 +127,10 @@ The tool is delivered via jupyter widgets and follows the same workflow as the a
 
 Via the use of pickling (the python module that allows for saving and loading of python objects) the analysis can be run in a segmented fashion. For example it is only necessary to load the data once, this can then be processed in a number of ways and in turn a number of different models can be run on one set of processed data.
 
+---
+
 ### Documentation
 - Detailed documentation of all python functions and classess.
-
----
 
 ## Testing
 Continuous integration is deployed using the travis framework.
