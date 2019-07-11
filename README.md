@@ -132,14 +132,18 @@ vae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
 ### 1.5 Visualisation
+* Visualisation is run by a standalone function.
+
+* Parameters
+    1. model : a model object initialised, embedded,and converted to 2d
+    2. attr : to plot fluid factor use "FF", for horizon depth use "horizon"
+    
 ```python
-# Plot the vae_1 representation with the AVO fluid factor attribute overlain
-PlotAgent(vae_1, "FF")
-
-# Plot the UMAP representation witht the horizon depth plotted as overlain attribute
-PlotAgent(umap)
+# Plot the vae representation with the AVO fluid factor attribute overlain
+PlotAgent(model=vae, attr="FF")
 ```
-
+### result
+(https://github.com/msc-acse/acse-9-independent-research-project-coush001/images/test)
 ---
 
 ## 2. Notebook GUI:
@@ -174,9 +178,6 @@ These are particularly focussed on running checks on the shapes of inputs and ou
 
 ## Built with:
 python 3
-
-## Author
-Hugo Coussens
 
 ## License
 [MIT license](LICENSE)
