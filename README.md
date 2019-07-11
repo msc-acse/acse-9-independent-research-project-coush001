@@ -1,7 +1,7 @@
 # SEISMIC REDUCTION 
-### Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ###
+## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ##
 
-The aim of this project is to deliver a set of tools to enable the efficient exploration of the potential use of unsupervised machine learning techniques for the analysis of seismic data sets specifically the recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
+This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. The tools allow for recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
 ---
 
@@ -18,23 +18,46 @@ pip install SeismicReduction
 import SeismicReduction
 ```
 
-### Example Usage:
+### Example data:
+* The example data set used in the project can be acquired from this link:<br>
+[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- curteousy of Stanford University*
+- Only the following files need to be extracted:
+> '3d_farstack.sgy', '3d_nearstack.sgy', 'Top_Heimdal_sebset.txt'
 
-#### Direct python scripting:
+
+### Usage:
+There are two ways to utilise the software, each with different merits:
+1. **Direct python scipting:** Access the python package tools directly.
+    * Access to model load/save capabilities for key models, or models run for large number of epochs.
+    * Ability to nest runs in a list to efficiently explore a consistent range of parameters.
+    * Ability to save the scripts of particularly useful analysis
+    * Ability to utilise distributed computing for large jobs without dependance on a notebook.
+    
+2. **Jupyter Notebook GUI:** Interface with very a straighforward self-explanatory graphical interface.
+    * Easy access to analysis without need of coding experience.
+    * Quick and easy to run an analysis with a few button clicks without having to write code.
+    * Pickle checkpointing allows for quick runs without having to repeat costly dataloading (similar benefits with Jupyter cells)
+  
+
+### 1. Direct python scripting:
 
 The tool is delivered via a series of classes delivering the following workflow:
-- Data Loading
-- Data processing
-- Model analysis
-- Visualisation
+1. Data Loading
+2. Data processing
+3. Model analysis
+  1. Model embedding to a chosen dimension *Example: PCA, VAE..*
+  2. Umap embedding to two dimensions
+4. Visualisation
+  1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
-These can be run in the following use case:
 
-##### Imports
+#### Work Flow:
+
+##### 1.1 Importing
 ```python
-from SeismicReduction import DataHolder, Processor, UMAP, VAE_model, set_seed, PlotAgent
+from SeismicReduction import *
 ```
-##### Data loading
+##### 1.2 Data loading
 ```python
 # initiate data holder with arbritary name, inline range, and cross-line range
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
@@ -46,7 +69,7 @@ dataholder.add_far('./data/3d_farstack.sgy');
 # add the horizon depth
 dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 ```
-##### Data processing
+##### 1.3 Data processing
 ```python
 # Create a processor object for the data
 processor = Processor(dataholder)
@@ -54,7 +77,7 @@ processor = Processor(dataholder)
 # Generate an output, first param specifies flattening procedure, second specifies normalisation
 input2 = processor([True, 12, 52], normalise=True)
 ```
-##### Unsupervised model analysis
+##### 1.4 Unsupervised model analysis
 ```python
 # run a VAE model on the input
 vae_1 = VAE_model(input2)
@@ -64,6 +87,10 @@ vae_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.0
 umap = UMAP(Input1)
 umap.reduce(n_neighbors=50, min_dist=0.001)
 ```
+
+##### 1.5 Two dimension UMAP embedding
+
+
 ##### Visualisation
 ```python
 # Plot the vae_1 representation with the AVO fluid factor attribute overlain
@@ -73,7 +100,7 @@ PlotAgent(vae_1, "FF")
 PlotAgent(umap)
 ```
 
-#### Notebook GUI:
+#### 2. Notebook GUI:
 A jupyter notebook GUI that captures all of the tools functionality without need to edit code has been created and is available for download from this repo *'GUI_tool.ipynb'*.
 
 The tool is delivered via jupyter widgets and follows the same workflow as the api tools:
