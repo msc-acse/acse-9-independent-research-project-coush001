@@ -142,9 +142,8 @@ vae.to_2d(umap_neighbours=50, umap_dist=0.02)
 # Plot the vae representation with the AVO fluid factor attribute overlain
 PlotAgent(model=vae, attr="FF")
 ```
-### result
-![Image of cluster]
-(https://github.com/msc-acse/acse-9-independent-research-project-coush001/blob/master/images/test.png)
+### Output!
+![Image of cluster](./images/test.png)
 ---
 
 ## 2. Notebook GUI:
