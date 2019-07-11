@@ -1,8 +1,7 @@
 """
-utils module containing various support functions for the running of the main processes
+utils module containing various support functions for the running of the main processes.
 
 """
-
 
 # standard imports
 import numpy as np
@@ -16,7 +15,6 @@ import torch.nn as nn
 
 # segy load and save tool
 import segypy
-
 
 
 def set_seed(seed):
@@ -37,13 +35,13 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-    torch.backends.cudnn.benchmark = False  ##uses the inbuilt cudnn auto-tuner to find the fastest convolution algorithms. -
+    torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabled = False
 
     return True
 
 
-def load_seismic(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
+def load_seismic(filename, inlines, xlines):
     """
     Load seismic amplitudes from .SEGY into numpy array.
 
@@ -74,7 +72,7 @@ def load_seismic(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
     return amplitude, twt
 
 
-def load_horizon(filename, inlines=[1300, 1502, 2], xlines=[1500, 2002, 2]):
+def load_horizon(filename, inlines, xlines):
     """
     Load horizon from .txt into numpy array.
 
@@ -142,7 +140,7 @@ def interpolate_horizon(horizon):
 
 class VAE(nn.Module):
     """
-    Pytorch compatible vae model implementation.
+    Pytorch implementation of vae.
     """
     def __init__(self, hidden_size, shape_in):
         """
@@ -161,14 +159,14 @@ class VAE(nn.Module):
         shape = shape_in[-1]
 
         assert shape % 4 == 0, 'input dimension for VAE must be factor of 4'
-        reductions = [0.5, 0.5,
-                      0.5]  # specified reduction factor of each convolution
+
+        # specified reduction factor of each convolution, if layer number or stride is changed update this list!!
+        reductions = [0.5, 0.5, 0.5]
 
         self.last_conv_channels = 34  # number of channels after last convolution
 
         # find the resultant dimension post convolution layer processing
-        post_conv = self.post_conv_dim(shape, reductions,
-                                       self.last_conv_channels)
+        post_conv = self.post_conv_dim(shape, reductions)
 
         self.linear_dimension = post_conv * self.last_conv_channels
 
@@ -206,7 +204,7 @@ class VAE(nn.Module):
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
-    def post_conv_dim(self, in_shape, conv_reductions, last_conv_channels):
+    def post_conv_dim(self, in_shape, conv_reductions):
         """
         Calculates the dimension of the data at the end of convolutions.
 
@@ -216,12 +214,10 @@ class VAE(nn.Module):
             Input dimension.
         conv_reductions : list
             List that specifies the reduction factor for each convolution, generally 1/stride of each layer.
-        last_conv_channels : int
-            Value of number of output channels of last convolution.
 
         Returns
         -------
-        int of dimension post convolutions.
+        int dimension post convolutions based on input dimension.
         """
         for i in conv_reductions:
             in_shape = int(np.ceil(
@@ -306,29 +302,102 @@ class VAE(nn.Module):
         return self.decode(z), mu, logvar, z
 
 
-def loss_function(recon_x, x, mu, logvar, window_size, beta=1):
+def loss_function(recon_x, x, mu, logvar, window_size, beta=1, recon_loss_method='mse'):
+    """
+    Loss function estimator for vae, referred to as the ELBO.
+
+    see Appendix B from VAE paper:
+    Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    https://arxiv.org/abs/1312.6114
+    0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+
+    Parameters
+    ----------
+    recon_x : torch tensor
+        reconstructed seismic traces
+    x : torch tensor
+        input seismic traces
+    mu : torch tensor
+        latent space mean
+    logvar : torch tensor
+        latent variance
+    window_size : int
+        input length of each trace
+    beta : float
+        beta value relevant for training a beta-vae
+    recon_loss_method : str
+        specifies the reconstruction loss technique to be used.
+
+    Returns
+    -------
+    summed loss value for whole batch
+
+    """
+
     criterion_mse = nn.MSELoss(size_average=False)
-    MSE = criterion_mse(recon_x.view(-1, 2, window_size),
+    mse = criterion_mse(recon_x.view(-1, 2, window_size),
                         x.view(-1, 2, window_size))
-    #TODO try cross entropy
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+
+    manual_mse = np.sum(np.power(recon_x.view(-1, 2, window_size).detach().numpy() -
+                                 x.view(-1, 2, window_size).detach().numpy(), 2))
+
+    dist = torch.dist(recon_x.view(-1, 2, window_size),
+                      x.view(-1, 2, window_size))
+
+    # will not function unless inputs are in interval [0,1]
+    # bce seemed to return same value as mse in external tests
+    # bce = nn.functional.binary_cross_entropy(recon_x.view(-1, 2, window_size),
+    #                                          x.view(-1, 2, window_size), size_average=False)
+
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return MSE + beta * KLD
+    # print('MSE:', mse.item(), '\n',
+    #       'dist', dist.item(), '\n'
+    #       'manual_mse', man_mse, '\n',
+    #       'bce', bce.item(), '\n',
+    #       'KLD', KLD.item(), '\n')
+
+    if recon_loss_method == 'mse':
+        recon_loss = mse
+
+    elif recon_loss_method == 'dist':
+        recon_loss = dist
+
+    else:
+        print('\nThe recon_loss_method chosen is not valid, "mse" will be used as default\n')
+        recon_loss = 'mse'
+
+    return recon_loss + beta * KLD
 
 
-# Function to perform one epoch of training
-def train(epoch, model, optimizer, train_loader, cuda=False, beta=1):
+def train(epoch, model, optimizer, train_loader, beta=1, recon_loss_method='mse'):
+    """
+    Trains a single epoch of the vae model.
+
+    Parameters
+    ----------
+    epoch : int
+        epoch number being trained
+    model : torch.nn.module
+        model being trained, here a vae
+    optimizer : torch.optim
+        optmizer used to train model
+    train_loader : torch.utils.data.DataLoader
+        data loader used for training
+    beta : float
+        beta parameter for the beta-vae
+    recon_loss_method : str
+        specifies the reconstruction loss technique
+
+    Returns
+    -------
+    trains the model and returns training loss for the epoch
+
+    """
     model.train()
     train_loss = 0
     for batch_idx, (data, _) in enumerate(train_loader):
         data = Variable(data)
-
-        if cuda:
-            data = data.cuda()
 
         optimizer.zero_grad()
         recon_batch, mu, logvar, _ = model(data)
@@ -336,42 +405,85 @@ def train(epoch, model, optimizer, train_loader, cuda=False, beta=1):
                              data,
                              mu,
                              logvar,
-                             window_size=data.shape[-1], beta=beta)
+                             window_size=data.shape[-1],
+                             beta=beta,
+                             recon_loss_method=recon_loss_method)
+        # print('batch:', batch_idx, 'loss:', loss.item())
         loss.backward()
-        train_loss += loss.item() * data.size(0)
+
+        # 'loss' is the SUM of all vector to vector losses in batch
+        train_loss += loss.item()  # * data.size(0)  # originally
+
+        # print('batch:', batch_idx, 'to add to total:', loss.item())
         optimizer.step()
 
     train_loss /= len(train_loader.dataset)
-    # print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss))
+    # print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss), len(train_loader.dataset))
     return train_loss
 
 
-# Function to perform evaluation of data on the model, used for testing
-def test(epoch, model, test_loader, cuda=False, beta=1):
+def test(epoch, model, test_loader, beta=1, recon_loss_method='mse'):
+    """
+        Tests the vae model every epoch.
+
+        Parameters
+        ----------
+        epoch : int
+            epoch number being trained
+        model : torch.nn.module
+            model being trained, here a vae
+        test_loader : torch.utils.data.DataLoader
+            data loader used for training
+        beta : float
+            beta parameter for the beta-vae
+        recon_loss_method : str
+            specifies the reconstruction loss technique
+
+        Returns
+        -------
+        test loss for the epoch
+
+        """
     model.eval()
     test_loss = 0
     with torch.set_grad_enabled(False):
         for i, (data, _) in enumerate(test_loader):
-            if cuda:
-                data = data.cuda()
+
             data = Variable(data)
             recon_batch, mu, logvar, _ = model(data)
-            test_loss += loss_function(recon_batch, data, mu, logvar,
-                                       data.shape[-1], beta=beta).item() * data.size(0)
+            loss = loss_function(recon_batch,
+                                 data,
+                                 mu,
+                                 logvar,
+                                 data.shape[-1],
+                                 beta=beta,
+                                 recon_loss_method=recon_loss_method)
+            test_loss += loss.item()  # * data.size(0) # originally
 
         test_loss /= len(test_loader.dataset)
         # print('====> Test set loss: {:.4f}'.format(test_loss))
     return test_loss
 
 
-# Function to forward_propagate a set of tensors and receive back latent variables and reconstructions
-def forward_all(model, all_loader, cuda=False):
+def forward_all(model, all_loader):
+    """
+    Run full training set through a trained model.
+
+    Parameters
+    ----------
+    model : torch.nn.module
+        model being run, here a vae.
+    all_loader : torch.utils.data.DataLoader
+        data loader used for running on model
+    Returns
+    -------
+    torch tensors
+        reconstructed data, latent dimension variables of data
+    """
     model.eval()
     reconstructions, latents = [], []
     with torch.set_grad_enabled(False):
         for i, (data, _) in enumerate(all_loader):
-            if cuda:
-                data = data.cuda()
             data = Variable(data)
             recon_batch, mu, logvar, z = model(data)
             reconstructions.append(recon_batch.cpu())

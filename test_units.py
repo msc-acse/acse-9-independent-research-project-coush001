@@ -12,8 +12,8 @@ dataholder.add_well('well_1', 36, 276 // 2)
 
 # processor
 processor = Processor(dataholder)
-not_flat_input = processor([False, 0, 232], True)
-flat_input = processor([True, 12, 12], True)
+not_flat_input = processor(crop=[True, 0, 232], normalise=True)
+flat_input = processor(flatten=[True, 12, 12], normalise=True)
 
 def test_utils_VAE():
     # testing VAE architecture input matches output

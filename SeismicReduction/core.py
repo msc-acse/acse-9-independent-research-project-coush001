@@ -180,7 +180,7 @@ class Processor:
 
         Parameters
         ----------
-        Data : object
+        dataholder : object
             A DataHolder object which the processor uses as source for processing.
         """
         self.raw = [dataholder.far, dataholder.near]
@@ -299,9 +299,12 @@ class Processor:
         well_x = 138
         out = []
         for i in data:
-            well_variance = np.mean(
-                np.std(i[well_i - 2:well_i + 1, well_x - 2:well_x + 1], 2))
-            i /= well_variance
+            # well_variance = np.mean(
+            #     np.std(i[well_i - 2:well_i + 1, well_x - 2:well_x + 1], 2))
+            # i /= well_variance
+            variance = np.mean(
+                np.std(i, 2))
+            i /= variance
             out.append(i)
 
         return out
@@ -373,21 +376,28 @@ class Processor:
         #  condense fluid factor to min of each trace
         self.attributes['FF'] = np.min(self.attributes['FF'], 1)
 
-    def __call__(self, flatten=False, normalise=False):
+    def __call__(self, flatten=[False, 0, 0], crop=[False, 0, 0], normalise=False):
         """
         Call function controls the full processing routine.
 
         A new call can be made repeatedly on an existing object as many times as needed.
         The routine will be run from the raw data each time and output a processed array and
-        attributes.
+        attributes. Only flatten OR crop OR neither is accepted NOT both.
 
         Parameters
         ----------
         flatten : list
-            List specifying flattening parameters:
-                flatten[0] : Bool specifying to flatten array or not
+            specifying flattening parameters:
+                flatten[0] : Bool
                 flatten[1] : int specifying top add
                 flatten[2] : int specifying below add
+        crop : list
+            specifying crop parameters:
+                crop[0] : Bool
+                crop[1] : int specifying top add
+                crop[2] : int specifying below add
+
+
         normalise : list
                 List specifying normalisation parameters:
                 flatten[0] : Bool specifying whether to run flattening method
@@ -407,9 +417,8 @@ class Processor:
         if flatten[0]:  # Flatten samples with top add, and bellow add
             self.out = self.flatten(self.out, flatten[1], flatten[2])
 
-        else:
-            # trim seismic from flatten[1] to flatten[2]
-            self.out = self.trim(self.out, flatten[1], flatten[2])
+        elif crop[0]:  # trim seismic from flatten[1] to flatten[2]
+            self.out = self.trim(self.out, crop[1], crop[2])
 
         self.out = self.roll_axis(self.out)  # Reorder axis of data to [x1,x2,twt]
 
@@ -420,7 +429,7 @@ class Processor:
         self.out = self.to_2d(self.out)
 
         # Find fluid factor, add to attributes
-        self.FF = self.run_AVO()
+        self.run_AVO()
 
         # condition attributes to 1d arrays
         self.condition_attributes()
@@ -439,13 +448,20 @@ class ModelAgent:
     Attributes
     ----------
     input : array_like
-        Three dimensional input array of seismic data to be analysed.
+        Three dimensional processed input array of seismic data to be analysed.
     attributes : dict
-        Seismic trace attributes used for plotting.
-    embedding : array_like
-        Unsupervised low-dimension representation of the input.
+        Seismic trace attributes used for plotting. Example : fluid factor.
     input_dimension : int
         The dimension of the each input trace, used for VAE model initialisation.
+    embedding : array_like
+        Unsupervised low-dimension representation of the input.
+    two_dimensions : array_like
+        The two dimensional representation used for visualisation, either direct from model or
+        represented via umap algorithm
+    loaded_model : bool
+        Flags whether this object is just used for loading and running a model
+        If true, no training routine will be run.
+
     """
     def __init__(self, data):
         """
@@ -484,6 +500,8 @@ class ModelAgent:
             Control over local vs global structure representation. see UMAP class for more detailed description.
         umap_dist : float
             Control on minimum distance of output representations, see again UMAP class for more detailed description.
+        verbose : bool
+            Control on whether to print UMAP verbose output.
 
         Returns
         -------
@@ -495,7 +513,7 @@ class ModelAgent:
             print('NOTE: embedding already reduced to 2D latent space, UMAP will not be run')
             self.two_dimensions = self.embedding
 
-        else:
+        else:  # run umap
             print('\n2D UMAP representation of {} embedding initialised:'.format(self.name))
             print('\tInput dimension:', self.embedding.shape)
             transformer = umap.UMAP(n_neighbors=umap_neighbours,
@@ -508,16 +526,40 @@ class ModelAgent:
         return
 
     def save_nn(self, path):
+        """
+        Save a trained neural network to file.
+
+        Parameters
+        ----------
+        path : str
+            File path to save model
+
+        Returns
+        -------
+        None
+        """
         torch.save(self.model, path)
 
     def load_nn(self, path):
+        """
+        Load a saved neural network from file.
+
+        Parameters
+        ----------
+        path : str
+            File path to load model from
+
+        Returns
+        -------
+
+        """
         self.loaded_model = True
         self.model = torch.load(path)
 
 
 class PcaModel(ModelAgent):
     """
-    Runs the PCA algorithm to reduce dimensionality of input to two dimensions.
+    Runs the PCA algorithm to reduce dimensionality of input to chosen dimension.
     """
     def __init__(self, data):
         super().__init__(data)
@@ -526,6 +568,11 @@ class PcaModel(ModelAgent):
     def reduce(self, n_components=2):
         """
         Controller method for the dimensionality reduction routine.
+
+        Parameters
+        ----------
+        n_components : int
+            Number of dimensions to reduce to.
 
         Returns
         -------
@@ -558,7 +605,7 @@ class UmapModel(ModelAgent):
         """
         Prepare self.embedding for umap_2d method.
 
-       Concatenate the near/far offset amplitudes to generate 2d array for the umap model.
+        Concatenate the near/far offset amplitudes to generate 2d array for the umap model.
 
         """
         self.embedding = self.concat()  # collapse the near far data into 1 dimension
@@ -622,7 +669,7 @@ class VaeModel(ModelAgent):
                                                       shuffle=False,
                                                       **kwargs)
 
-    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2):
+    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, recon_loss_method='mse'):
         """
         Handles the training of the vae model.
 
@@ -634,6 +681,8 @@ class VaeModel(ModelAgent):
             Size of the latent space of the vae.
         lr : float.
             Learning rate for the vae model training.
+        recon_loss_method : str
+            Method for reconstruction loss calculation
 
         Returns
         -------
@@ -652,7 +701,7 @@ class VaeModel(ModelAgent):
         if self.plot_loss:
             liveloss = PlotLosses()
             liveloss.skip_first = 0
-            liveloss.figsize = (16, 10)  # , fig_path=self.path
+            liveloss.figsize = (16, 10)
 
         # Start training loop
         for epoch in range(1, epochs + 1):
@@ -660,11 +709,10 @@ class VaeModel(ModelAgent):
                        self.model,
                        optimizer,
                        self.train_loader,
-                       cuda=False)  # Train model on train dataset
-            testl = test(epoch, self.model, self.test_loader,
-                         cuda=False)  # Validate model on test dataset
+                       recon_loss_method=recon_loss_method)  # Train model on train dataset
+            testl = test(epoch, self.model, self.test_loader, recon_loss_method=recon_loss_method)
 
-            if self.plot_loss:
+            if self.plot_loss:  # log train and test losses for dynamic plot
                 logs = {}
                 logs['' + 'ELBO'] = tl
                 logs['val_' + 'ELBO'] = testl
@@ -679,10 +727,10 @@ class VaeModel(ModelAgent):
         -------
         Modifies the zs attribute, an array of shape (number_traces, latent_space)
         """
-        _, zs = forward_all(self.model, self.all_loader, cuda=False)
+        _, zs = forward_all(self.model, self.all_loader)
         return zs.numpy()
 
-    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, recon_loss_method='mse', plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -694,10 +742,8 @@ class VaeModel(ModelAgent):
             Size of the vae model latent space representation.
         lr : float
             Learning rate for vae model training.
-        umap_neighbours : int
-            UMAP algorithm n_neighbours parameter.
-        umap_dist : float
-            UMAP algorithm min_dist parameter.
+        recon_loss_method : str
+            Method for reconstruction loss calculation
         plot_loss : bool
             Control on whether to plot the loss on vae training.
 
@@ -706,15 +752,16 @@ class VaeModel(ModelAgent):
         Modifies embedding attribute via generation of the low dimensional representation.
 
         """
-        if hidden_size < 2: raise Exception('Please use hidden size > 1')
+        if hidden_size < 2:
+            raise Exception('Please use hidden size > 1')
 
         self.plot_loss = plot_loss  # define whether to plot training losses or not
         self.create_dataloader()
 
         if not self.loaded_model:
-            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr)
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, recon_loss_method=recon_loss_method)
 
-        self.embedding = self.run_vae()  # arb dim output from VAE
+        self.embedding = self.run_vae()  # arbitrary dimension output from VAE
 
 
 class BVaeModel(ModelAgent):
@@ -769,7 +816,7 @@ class BVaeModel(ModelAgent):
                                                       shuffle=False,
                                                       **kwargs)
 
-    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, beta=10):
+    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, beta=10, recon_loss_method='mse'):
         """
         Handles the training of the vae model.
 
@@ -783,6 +830,8 @@ class BVaeModel(ModelAgent):
             Learning rate for the vae model training.
         beta : float
             Beta value adjusts the weight of importance in KLD term in loss function
+        recon_loss_method : str
+            Method for reconstruction loss calculation
         Returns
         -------
         None
@@ -790,7 +839,7 @@ class BVaeModel(ModelAgent):
         """
         set_seed(42)  # Set the random seed
         self.model = VAE(hidden_size,
-                         self.input.shape)  # Inititalize the model
+                         self.input.shape)  # Initialize the model
 
         # Create a gradient descent optimizer
         optimizer = optim.Adam(self.model.parameters(),
@@ -800,7 +849,7 @@ class BVaeModel(ModelAgent):
         if self.plot_loss:
             liveloss = PlotLosses()
             liveloss.skip_first = 0
-            liveloss.figsize = (16, 10)  # , fig_path=self.path
+            liveloss.figsize = (16, 10)
 
         # Start training loop
         for epoch in range(1, epochs + 1):
@@ -808,9 +857,11 @@ class BVaeModel(ModelAgent):
                        self.model,
                        optimizer,
                        self.train_loader,
-                       cuda=False, beta=beta)  # Train model on train dataset
+                       beta=beta,
+                       recon_loss_method=recon_loss_method)  # Train model on train dataset
             testl = test(epoch, self.model, self.test_loader,
-                         cuda=False, beta=beta)  # Validate model on test dataset
+                         beta=beta,
+                         recon_loss_method=recon_loss_method)  # Validate model on test dataset
 
             if self.plot_loss:
                 logs = {}
@@ -827,10 +878,10 @@ class BVaeModel(ModelAgent):
         -------
         Modifies the zs attribute, an array of shape (number_traces, latent_space)
         """
-        _, zs = forward_all(self.model, self.all_loader, cuda=False)
+        _, zs = forward_all(self.model, self.all_loader)
         return zs.numpy()
 
-    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, beta=5, plot_loss=True):
+    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, beta=5, recon_loss_method='mse', plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -844,6 +895,8 @@ class BVaeModel(ModelAgent):
             Learning rate for vae model training.
         beta : float
             Beta value adjusts the weight of importance in KLD term in loss function
+        recon_loss_method : str
+            Method for reconstruction loss calculation
         plot_loss : bool
             Control on whether to plot the loss on vae training.
 
@@ -859,9 +912,10 @@ class BVaeModel(ModelAgent):
         self.create_dataloader()  # create datasets
 
         if not self.loaded_model:
-            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr, beta=beta)
+            self.train_vae(epochs=epochs, hidden_size=hidden_size, lr=lr,
+                           beta=beta, recon_loss_method=recon_loss_method)
 
-        self.embedding = self.run_vae()  # arb dimension output from bVAE
+        self.embedding = self.run_vae()  # arbitrary dimension output from bVAE
 
 
 def plot_agent(model, attr='FF'):
@@ -889,9 +943,9 @@ def plot_agent(model, attr='FF'):
                model.name, attr),
            aspect='equal')
     scatter = ax.scatter(model.two_dimensions[:, 0],
-                   model.two_dimensions[:, 1],
-                   s=1.0,
-                   c=model.attributes[attr])
+                         model.two_dimensions[:, 1],
+                         s=1.0,
+                         c=model.attributes[attr])
     cbar = plt.colorbar(scatter, shrink=0.7, orientation='vertical')
     cbar.set_label(label=attr, rotation=90, labelpad=10)
     plt.show()
