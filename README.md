@@ -56,57 +56,80 @@ The tool is delivered via a series of classes delivering the following workflow:
 ## Work Flow:
 
 ### 1.1 Importing
-Run in the standard way. Can also choose to import individual classes but there isn't many so the namespace will not be swamped.
+* Run in the standard way. Can also choose to import individual classes but there isn't many so the namespace will not be swamped.
 ```python
 from SeismicReduction import *
 ```
 ### 1.2 Data loading
-Data loading is done via the **DataHolder** class. <br>
-Initialisation takes three parameters
-1. Dataset name : self explanatory
-2. inline range : in the form [start, stop, step]
-3. inline range : in the form [start, stop, step] <br>
+* Data loading is done via the **DataHolder** class. <br>
+* Initialisation takes three parameters:
+    1. Dataset name : self explanatory
+    2. inline range : in the form [start, stop, step]
+    3. inline range : in the form [start, stop, step] <br>
 *if using test dataset use the below ranges, if using new data check the info documentation for this*
 ```python
 # init
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 ```
-Loading the near and far offset amplitudes files is self explanatory, use the relative pathname of the files. <br>
-*files **must** be in .sgy format*
+* Loading the near and far offset amplitudes files is self explanatory, use the relative pathname of the files. <br>
+* *files **must** be in .sgy format*
 ```python
 # add near and far offset amplitudes
 dataholder.add_near('./data/3d_nearstack.sgy');
 dataholder.add_far('./data/3d_farstack.sgy');
 ```
-Loading the horizon, information must be in .txt with columns: inline, crossline, twt 
+* Loading the horizon, information must be in .txt with columns: inline, crossline, twt 
 ```python
 # add the horizon depth
 dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 ```
 ### 1.3 Data processing
-Uses class **Processor**. A processor only needs to be initialised **once** per dataset, the parameter is the DataHolder object. <br>
+* Uses class **Processor**. A processor only needs to be initialised **once** per dataset, the parameter is the DataHolder object. <br>
 ```python
 # Create a processor object for the data
 processor = Processor(dataholder)
 ```
-An input is generated from the object ____call____ 
+* An input is generated from the object __\_\_call\_\___ with the following parameters:
+    1. flatten : list with three elements [bool, int: above add, int: below add]
+        * element one chooses whether to run horizon flattening in the dataset
+        * above and below add choose how many amplitudes either side of the horizon to extract
+    2. crop : list with three elements [bool, int: above index, int: below index]
+        * element one chooses whether to run cropping on the dataset
+        * above and below index choose the extents of the seismic window to be extracted
+    3. normalise : bool
+        * chooses whether to normalise the data or not
+* **Note:** If both flattening and cropping are true, only flattening will occur. 
 ```python
 # Generate an output, first param specifies flattening procedure, second specifies normalisation
-input2 = processor([True, 12, 52], normalise=True)
+input = processor(flatten=[True, 12, 52], crop=[False, 0, 232], normalise=True)
 ```
 ### 1.4 Model analysis
+* The available unsuperverised machine learning techniques are available in the following classes:
+    1. Principal Component Analysis: **PcaModel**
+    2. Uniform Manifold Approximation: **UmapModel**
+    3. Variational Auto Encoder: **VaeModel**
+    4. Beta-Varational Auto Encoder: **BVaeModel**
+
+* Each model must be initialised with an input generated from the processor object.  
 ```python
-# run a VAE model on the input
-vae_1 = VAE_model(input2)
-vae_1.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=True)
-
-# run a UMAP model on the input
-umap = UMAP(Input1)
-umap.reduce(n_neighbors=50, min_dist=0.001)
+# initialise a VAE model on the input
+vae = VaeModel(input2)
 ```
-
+* For every model the next step is to run the **.reduce()** method.
+* Depending on the model, the parameter options vary.
+```python
+# reduce to lower dimension
+vae.reduce(epochs=5, hidden_size=2, lr=1e-2, umap_neighbours=50, umap_dist=0.001, plot_loss=True)
+```
 ### 1.4.2 Two dimension UMAP embedding
-
+* Regardless of the model, after **.reduce()**, **.to_2d()** must be run to convert to a 2d representation of the embedding via umap. If already reduced to 2d via the model this method must still be run to configure internal data.
+* Parameters:
+   1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
+   2. umap_dist : the min_dist parameter used by the umap algorithm
+```python
+# reduce to 2d with umap
+vae.to_2d(umap_neighbours=50, umap_dist=0.02)
+```
 
 ### 1.5 Visualisation
 ```python
