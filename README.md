@@ -144,7 +144,7 @@ PlotAgent(model=vae, attr="FF")
 ```
 ### result
 ![Image of cluster]
-(https://github.com/msc-acse/acse-9-independent-research-project-coush001/images/test)
+(https://github.com/msc-acse/acse-9-independent-research-project-coush001/images/test.png)
 ---
 
 ## 2. Notebook GUI:
