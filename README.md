@@ -143,6 +143,7 @@ vae.to_2d(umap_neighbours=50, umap_dist=0.02)
 PlotAgent(model=vae, attr="FF")
 ```
 ### result
+![Image of cluster]
 (https://github.com/msc-acse/acse-9-independent-research-project-coush001/images/test)
 ---
 
