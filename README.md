@@ -27,9 +27,9 @@ import SeismicReduction
 
 ### Usage:
 There are two ways to utilise the software, each with different merits:
-1. **Direct python scipting:** Access the python package tools directly.
+1. **Direct Python Scripting:** Access the python package tools directly.
     * Access to model load/save capabilities for key models, or models run for large number of epochs.
-    * Ability to nest runs in a list to efficiently explore a consistent range of parameters.
+    * Ability to nest runs in a list to efficiently explore a regular step of parameters.
     * Ability to save the scripts of particularly useful analysis
     * Ability to utilise distributed computing for large jobs without dependance on a notebook.
     
@@ -45,8 +45,8 @@ There are two ways to utilise the software, each with different merits:
 The tool is delivered via a series of classes delivering the following workflow:
 1. Imports
 2. Data Loading
-3. Data processing
-4. Model analysis
+3. Data Processing
+4. Model Analysis
   1. Model embedding to a chosen dimension *Example: PCA, VAE..*
   2. Umap embedding to two dimensions
 5. Visualisation
