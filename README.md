@@ -102,13 +102,13 @@ processor = Processor(dataholder)
 2. Input generation via __\_\_call\_\___  method:
     * Parameters:
        1. flatten : three element list with three elements [bool, int: above add, int: below add]
-           * [0] : Bool whether to run horizon flattening in the dataset
-           * [1] : Above add choose number of above horizon amplitdue samples
-           * [2] : Below add choose number of below horizon amplitdue samples
+           * [0] : *bool* : whether to run horizon flattening in the dataset
+           * [1] : *above add* : choose number of above horizon amplitdue samples
+           * [2] : *below add* : choose number of below horizon amplitdue samples
        2. crop : three element list with three elements [bool, int: above index, int: below index]
-           * [0] :  Bool chooses whether to run cropping on the dataset
-           * [1] :  Above index top extend of the seismic window to be cropped
-           * [2] :  Below index bottom extend of the seismic window to be cropped
+           * [0] :  *bool* : chooses whether to run cropping on the dataset
+           * [1] :  *above index* : top extent of the seismic window to be cropped
+           * [2] :  *below index* : bottom extent of the seismic window to be cropped
        3. normalise : bool
            * chooses whether to normalise the data or not
 * **Note:** If both flattening and cropping are true, only flattening will occur. 
