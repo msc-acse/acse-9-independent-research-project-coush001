@@ -186,7 +186,7 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
 ### 1.5 Visualisation
-* Visualisation is run by a standalone function **PlotAgent()**:
+* Visualisation is run by a standalone function **plot_agent()**:
 
 * Parameters
     1. model : a model object initialised, embedded, and converted to 2d
@@ -194,10 +194,10 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
     
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
-PlotAgent(model=pca, attr="FF")
-PlotAgent(model=umap, attr="horizon")
-PlotAgent(model=vae, attr="FF")
-PlotAgent(model=bvae, attr="horizon")
+plot_agent(model=pca, attr="FF")
+plot_agent(model=umap, attr="horizon")
+plot_agent(model=vae, attr="FF")
+plot_agent(model=bvae, attr="horizon")
 ```
 ### Output!
 ![Image of cluster](./images/test.png)
