@@ -205,26 +205,32 @@ PlotAgent(model=bvae, attr="horizon")
 ### Model Load and save functionality
 * Load and save functionality is restricted to the vae and bvae models only.
 
-1. Save via **.save_nn()**:
+1. Save trained network via **.save_nn()**:
     * Method on a model that has been trained via .reduce()
     * Parameter:
        1. File pathname string for model to be saved to
 ```python
 vae.save_nn('./saved_nn/vae1')
 ````
-2. Initialise new model object and load via **load_nn()**:
+2. Initialise new model object to host loaded model:
+```python
+loadedmodel = VaeModel(input1)
+```
+
+3. load trained network via **load_nn()**:
     * Parameter:
        1. File pathname string for model to be loaded
 ```python
-loadedmodel = VaeModel(input1)
 loadedmodel.load_nn('./saved_nn/vae1')
 ```
-3. Run **.reduce()** and **.to_2d()** as usual, but the neural net will not need to be trained.
+
+3. Run **.reduce()** and **.to_2d()** as usual, the neural net will not need to be trained.
     * **Note:** no parameters taken in this call on **.reduce()** as the model is already trained!.
 ```python
 loadedmodel.reduce()
 loadedmodel.to_2d(umap_neighbours=5, umap_dist=0.1)
 PlotAgent(loadedmodel)
+```
 ---
 
 ## 2. Notebook GUI:
