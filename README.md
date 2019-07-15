@@ -101,12 +101,14 @@ processor = Processor(dataholder)
 ```
 2. Input generation via __\_\_call\_\___  method:
     * Parameters:
-       1. flatten : list with three elements [bool, int: above add, int: below add]
-           * element one chooses whether to run horizon flattening in the dataset
-           * above and below add choose how many amplitudes either side of the horizon to extract
-       2. crop : list with three elements [bool, int: above index, int: below index]
-           * element one chooses whether to run cropping on the dataset
-           * above and below index choose the extents of the seismic window to be extracted
+       1. flatten : three element list with three elements [bool, int: above add, int: below add]
+           * [0] : Bool whether to run horizon flattening in the dataset
+           * [1] : Above add choose number of above horizon amplitdue samples
+           * [2] : Below add choose number of below horizon amplitdue samples
+       2. crop : three element list with three elements [bool, int: above index, int: below index]
+           * [0] :  Bool chooses whether to run cropping on the dataset
+           * [1] :  Above index top extend of the seismic window to be cropped
+           * [2] :  Below index bottom extend of the seismic window to be cropped
        3. normalise : bool
            * chooses whether to normalise the data or not
 * **Note:** If both flattening and cropping are true, only flattening will occur. 
@@ -224,7 +226,7 @@ loadedmodel = VaeModel(input1)
 loadedmodel.load_nn('./saved_nn/vae1')
 ```
 
-3. Run **.reduce()** and **.to_2d()** as usual, the neural net will not need to be trained.
+4. Run **.reduce()** and **.to_2d()** as usual, the neural net will not need to be trained.
     * **Note:** no parameters taken in this call on **.reduce()** as the model is already trained!.
 ```python
 loadedmodel.reduce()
