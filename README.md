@@ -72,7 +72,7 @@ from SeismicReduction import *
 # init
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 ```
-2. Loading the near and far offset amplitudes.
+2. Loading the near and far offset amplitudes **.add_near(), .add_far()**:.
     * Parameter:
         1. Relative file pathnames <br>
 * *files **must** be in .sgy format*
@@ -81,7 +81,7 @@ dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 dataholder.add_near('./data/3d_nearstack.sgy');
 dataholder.add_far('./data/3d_farstack.sgy');
 ```
-3. Loading the horizon:
+3. Loading the horizon **.add_horizon()**:
     * Parameter:
         1. Relative file pathname
 **Note:** file format must be .txt with columns: inline, crossline, twt
@@ -99,8 +99,7 @@ dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 # Create a processor object for the data
 processor = Processor(dataholder)
 ```
-2. Input generation:
-    * Generated from the object __\_\_call\_\___  method
+2. Input generation via __\_\_call\_\___  method:
     * Parameters:
        1. flatten : list with three elements [bool, int: above add, int: below add]
            * element one chooses whether to run horizon flattening in the dataset
@@ -113,7 +112,8 @@ processor = Processor(dataholder)
 * **Note:** If both flattening and cropping are true, only flattening will occur. 
 ```python
 # Generate an output, first param specifies flattening procedure, second specifies normalisation
-input = processor(flatten=[True, 12, 52], crop=[False, 0, 232], normalise=True)
+input = processor(flatten=[True, 12, 52], crop=[False, 0, 0], normalise=True)
+input2 = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
 ```
 ### 1.4 Model analysis
 * The available unsuperverised machine learning techniques are available in the following classes:
@@ -136,7 +136,7 @@ bvae = BVaeModel(input)
 
 ```
 
-2. Perform model analysis redice to arbitrary dimension via **.reduce()** method.
+2. Perform model analysis/training/dimensionality reduction via **.reduce()** method:
     * **PcaModel**
         * Parameters:
             1. n_components : *number of prinicpal components for pca to reduce to*
@@ -168,28 +168,63 @@ bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', 
 ```
 
 ### 1.4.2 Two dimension UMAP embedding
-* Regardless of the model, after **.reduce()**, **.to_2d()** must be run to convert to a 2d representation of the embedding via umap. If already reduced to 2d via the model this method must still be run to configure internal data.
-* Parameters:
-   1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
-   2. umap_dist : the min_dist parameter used by the umap algorithm
+* Regardless of the model, after **.reduce()**, **.to_2d()** must be run to convert to a 2d representation of the embedding via umap. <br>
+**Note:** If already reduced to two dimensions via the model this method must still be run to configure internal data structures.
+* **.to_2d()**:
+   * Parameters:
+      1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
+      2. umap_dist : the min_dist parameter used by the umap algorithm
+      3. verbose : bool, print umap verbose training output, defualt=False
 ```python
 # reduce to 2d with umap
+pca.to_2d(umap_neighbours=50, umap_dist=0.02, verbose=True)
+umap.to_2d(umap_neighbours=50, umap_dist=0.02)
 vae.to_2d(umap_neighbours=50, umap_dist=0.02)
+bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
 ### 1.5 Visualisation
-* Visualisation is run by a standalone function.
+* Visualisation is run by a standalone function **PlotAgent()**:
 
 * Parameters
-    1. model : a model object initialised, embedded,and converted to 2d
+    1. model : a model object initialised, embedded, and converted to 2d
     2. attr : to plot fluid factor use "FF", for horizon depth use "horizon"
     
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
+PlotAgent(model=pca, attr="FF")
+PlotAgent(model=umap, attr="horizon")
 PlotAgent(model=vae, attr="FF")
+PlotAgent(model=bvae, attr="horizon")
 ```
 ### Output!
 ![Image of cluster](./images/test.png)
+
+---
+
+### Model Load and save functionality
+* Load and save functionality is restricted to the vae and bvae models only.
+
+1. Save via **.save_nn()**:
+    * Method on a model that has been trained via .reduce()
+    * Parameter:
+       1. File pathname string for model to be saved to
+```python
+vae.save_nn('./saved_nn/vae1')
+````
+2. Initialise new model object and load via **load_nn()**:
+    * Parameter:
+       1. File pathname string for model to be loaded
+```python
+loadedmodel = VaeModel(input1)
+loadedmodel.load_nn('./saved_nn/vae1')
+```
+3. Run **.reduce()** and **.to_2d()** as usual, but the neural net will not need to be trained.
+    * **Note:** no parameters taken in this call on **.reduce()** as the model is already trained!.
+```python
+loadedmodel.reduce()
+loadedmodel.to_2d(umap_neighbours=5, umap_dist=0.1)
+PlotAgent(loadedmodel)
 ---
 
 ## 2. Notebook GUI:
