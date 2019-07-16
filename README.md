@@ -5,7 +5,7 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 
 ---
 
-## Getting started:
+# Getting started:
 
 ### Installation:
 - The package is hosted at https://pypi.org/project/SeismicReduction/
@@ -53,7 +53,7 @@ The tool is delivered via a series of classes delivering the following workflow:
   1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
 
-## Work Flow:
+## SeismicReduction Documentation
 
 ### 1.1 Importing
 * Run via standard python import protocol. Can also choose to import individual classes but there isn't many so the namespace will not be cluttered.
@@ -200,12 +200,13 @@ plot_agent(model=vae, attr="FF")
 plot_agent(model=bvae, attr="horizon")
 ```
 ### Output!
-![Image of cluster](./images/test.png)
+<a href="url"><img src="./images/test.png" align="center" height="700" width="700" ></a>
 
 ---
 
-### Model Load and save functionality
+## Model Load and save functionality
 * Load and save functionality is restricted to the vae and bvae models only.
+* Not available within GUI
 
 1. Save trained network via **.save_nn()**:
     * Method on a model that has been trained via .reduce()
@@ -245,10 +246,11 @@ Via the use of pickling (the python module that allows for saving and loading of
 
 ---
 
-### Documentation
-- Detailed documentation of all python functions and classess.
+# Contributing
 
-## Testing
+---
+
+# Testing
 Continuous integration is deployed using the travis framework.
 
 ### Build Status
