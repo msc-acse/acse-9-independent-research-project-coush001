@@ -26,7 +26,6 @@ def test_base_case_UMAP():
 
     # load the documented base case result as np array
     UMAP_base_case = np.load('test_cases/Flat-top12,bottom52,UMAP-neigh50,dist0.001.npy')
-    plot_agent(umap)
 
     # Base Case testing:
     assert (UMAP_base_case.shape == umap.two_dimensions.shape), \
