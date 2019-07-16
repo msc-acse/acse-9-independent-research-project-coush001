@@ -200,7 +200,7 @@ plot_agent(model=vae, attr="FF")
 plot_agent(model=bvae, attr="horizon")
 ```
 ### Output!
-<a href="url"><img src="./images/test.png" align="center" height="700" width="700" ></a>
+<a href="url"><img src="./images/test.png" align="centre" height="500" width="520" ></a>
 
 ---
 
