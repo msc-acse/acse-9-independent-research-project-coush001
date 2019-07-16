@@ -53,7 +53,7 @@ The tool is delivered via a series of classes delivering the following workflow:
   1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
 
-## Work Flow Documentation:
+## SeismicReduction Documentation
 
 ### 1.1 Importing
 * Run via standard python import protocol. Can also choose to import individual classes but there isn't many so the namespace will not be cluttered.
