@@ -53,7 +53,7 @@ The tool is delivered via a series of classes delivering the following workflow:
   1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
 
-## Work Flow:
+## Work Flow Documentation:
 
 ### 1.1 Importing
 * Run via standard python import protocol. Can also choose to import individual classes but there isn't many so the namespace will not be cluttered.
@@ -200,7 +200,7 @@ plot_agent(model=vae, attr="FF")
 plot_agent(model=bvae, attr="horizon")
 ```
 ### Output!
-<a href="url"><img src="./images/test.png" align="center" height="900" width="900" ></a>
+<a href="url"><img src="./images/test.png" align="center" height="700" width="700" ></a>
 
 ---
 
