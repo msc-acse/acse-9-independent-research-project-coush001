@@ -475,7 +475,7 @@ class ModelAgent:
         self.input = data[0]
         self.attributes = data[1]
         self.input_dimension = self.input.shape[-1]
-        self.embedding = None  # intermediate embedding from model
+        self.embedding = None  # intermediate lower dimensional embedding from model
         self.two_dimensions = None  # final output for visualisation
         self.loaded_model = False  # define whether this object is for loading or training a model
         print("ModelAgent initialised")
@@ -538,6 +538,7 @@ class ModelAgent:
         -------
         None
         """
+
         torch.save(self.model, path)
 
     def load_nn(self, path):
@@ -587,10 +588,10 @@ class PcaModel(ModelAgent):
         self.embedding = p_components
 
     def save_nn(self, name):
-        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+        raise Exception('Method is not appropriate for this type of model - No Neural Network in PCA!')
 
     def load_nn(self, name):
-        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+        raise Exception('Method is not appropriate for this type of model - No Neural Network in PCA!')
 
 
 class UmapModel(ModelAgent):
@@ -609,12 +610,13 @@ class UmapModel(ModelAgent):
 
         """
         self.embedding = self.concat()  # collapse the near far data into 1 dimension
+        self.to_2d()
 
     def save_nn(self, name):
-        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+        raise Exception('Method is not appropriate for this type of model - No Neural Network in UMAP!')
 
     def load_nn(self, name):
-        raise Exception('Method is not appropriate for this type of model - No Neural Net!')
+        raise Exception('Method is not appropriate for this type of model - No Neural Network in UMAP!')
 
 
 class VaeModel(ModelAgent):

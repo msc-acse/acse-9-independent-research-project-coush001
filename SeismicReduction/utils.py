@@ -184,21 +184,9 @@ class VAE(nn.Module):
         # Decoder
         self.fc3 = nn.Linear(hidden_size, 128)
         self.fc4 = nn.Linear(128, self.linear_dimension)
-        self.deconv1 = nn.ConvTranspose1d(self.last_conv_channels,
-                                          32,
-                                          kernel_size=4,
-                                          stride=2,
-                                          padding=1)
-        self.deconv2 = nn.ConvTranspose1d(32,
-                                          32,
-                                          kernel_size=4,
-                                          stride=2,
-                                          padding=1)
-        self.deconv3 = nn.ConvTranspose1d(32,
-                                          32,
-                                          kernel_size=4,
-                                          stride=2,
-                                          padding=1)
+        self.deconv1 = nn.ConvTranspose1d(self.last_conv_channels, 32, kernel_size=4, stride=2, padding=1)
+        self.deconv2 = nn.ConvTranspose1d(32, 32, kernel_size=4, stride=2, padding=1)
+        self.deconv3 = nn.ConvTranspose1d(32, 32, kernel_size=4, stride=2, padding=1)
         self.conv5 = nn.Conv1d(32, 2, kernel_size=3, stride=1, padding=1)
 
         self.relu = nn.ReLU()
@@ -365,7 +353,7 @@ def loss_function(recon_x, x, mu, logvar, window_size, beta=1, recon_loss_method
 
     else:
         print('\nThe recon_loss_method chosen is not valid, "mse" will be used as default\n')
-        recon_loss = 'mse'
+        recon_loss = mse
 
     return recon_loss + beta * KLD
 

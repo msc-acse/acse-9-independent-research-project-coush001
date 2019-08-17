@@ -200,7 +200,7 @@ plot_agent(model=vae, attr="FF")
 plot_agent(model=bvae, attr="horizon")
 ```
 ### Output!
-<a href="url"><img src="./images/test.png" align="centre" height="500" width="520" ></a>
+<a href="url"><img src="./images/test.png" align="center" width="700" ></a>
 
 ---
 
@@ -243,6 +243,11 @@ The tool is delivered via jupyter widgets and follows the same workflow as the a
 - Data Loading->Data processing->Model analysis->Visualisation.
 
 Via the use of pickling (the python module that allows for saving and loading of python objects) the analysis can be run in a segmented fashion. For example it is only necessary to load the data once, this can then be processed in a number of ways and in turn a number of different models can be run on one set of processed data.
+
+<a href="url"><img src="./images/gui-1.png" align="centre" width="500" ></a>
+<a href="url"><img src="./images/gui-2.png" align="centre" width="500" ></a>
+<a href="url"><img src="./images/gui-3.png" align="centre" width="500" ></a>
+<a href="url"><img src="./images/gui-4.png" align="centre" width="500" ></a>
 
 ---
 
