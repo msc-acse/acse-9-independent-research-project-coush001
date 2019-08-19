@@ -1,27 +1,25 @@
+# Author (GitHub alias): coush001
 from distutils.core import setup
+
 setup(
   name = 'SeismicReduction',         # How you named your package folder (MyLib)
   packages = ['SeismicReduction'],   # Chose the same as "name"
-  version = 'version_2',      # Start with a small number and increase it with every change you make
+  version = 'v0.3',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here:
   description = 'Perform unsupervised machine learning on seismic data.',   # Give a short description about your library
+  # long_description=long_description,
+  # long_description_content_type='text/markdown',  # This is important!
   author = 'coush001',                   # Type in your name
   author_email = 'email@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/coush001',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/msc-acse/acse-9-independent-research-project-coush001/archive/v0.2.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/msc-acse/acse-9-independent-research-project-coush001/archive/v0.3.tar.gz',    # I explain this later on
   keywords = ['seismicdata', 'unsupervisedlearning', 'machinelearning'],   # Keywords that define your package best
-  install_requires=['bokeh',
-                    'datashader',
-                    'datashape',
-                    'livelossplot',
+  install_requires=['livelossplot',
                     'matplotlib',
                     'numpy',
-                    'numpydoc',
-                    'pytest',
                     'scikit-image',
                     'scikit-learn',
                     'scipy',
-                    'seaborn',
                     'segypy',
                     'torch',
                     'torchvision',

@@ -1,19 +1,17 @@
-"""
-utils module containing various support functions for the running of the main processes.
-
-"""
+# Author (GitHub alias): coush001
+"""utils module containing various support functions for the running of the main processes."""
 
 # standard imports
 import numpy as np
 import random
 import scipy
 
-# pytorch
+# pytorch imports
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-# segy load and save tool
+# segy load and save tool import
 import segypy
 
 
@@ -60,7 +58,6 @@ def load_seismic(filename, inlines, xlines):
         Array of seismic amplitudes.
     twt : array_like
         Array of twt range for data.
-
     """
     inl = np.arange(*inlines)
     crl = np.arange(*xlines)
@@ -114,7 +111,7 @@ def interpolate_horizon(horizon):
 
     Returns
     -------
-    Interpolated array for full field coverage.
+    Interpolated array.
 
     """
 
@@ -150,24 +147,26 @@ class VAE(nn.Module):
         ----------
         hidden_size : int
             Size of the vae latent space.
-        shape_in : int
-            Size of the input dimension.
+        shape_in : array like
+            Shape of the data input.
         """
         super(VAE, self).__init__()
 
-        #  Architecture paramaters
+        # Retrieve input dimension on each sample
         shape = shape_in[-1]
 
         assert shape % 4 == 0, 'input dimension for VAE must be factor of 4'
 
-        # specified reduction factor of each convolution, if layer number or stride is changed update this list!!
+        # Specified reduction factor of each convolution, if layer number or stride is changed update this list!!
         reductions = [0.5, 0.5, 0.5]
 
-        self.last_conv_channels = 34  # number of channels after last convolution
+        # number of channels after last convolution
+        self.last_conv_channels = 34
 
-        # find the resultant dimension post convolution layer processing
+        # find the resultant dimension post convolution layers
         post_conv = self.post_conv_dim(shape, reductions)
 
+        # corresponding dimension for the input into linear fully connected layer
         self.linear_dimension = post_conv * self.last_conv_channels
 
         # Encoder
@@ -223,7 +222,7 @@ class VAE(nn.Module):
 
         Returns
         -------
-        Latent space representation.
+            Mu and Logvar outputs
         """
         out = self.relu(self.conv1(x))
         out = self.relu(self.conv2(out))
@@ -234,6 +233,18 @@ class VAE(nn.Module):
         return self.fc21(h1), self.fc22(h1)
 
     def reparameterize(self, mu, logvar):
+        """
+        Sample from the latent space variables
+
+        Parameters
+        ----------
+        mu : multivariate mean
+        logvar : log variance
+
+        Returns
+        -------
+        Latent space sampled variables
+        """
         if self.training:
             std = logvar.mul(0.5).exp_()
             eps = Variable(std.data.new(std.size()).normal_())
@@ -321,29 +332,16 @@ def loss_function(recon_x, x, mu, logvar, window_size, beta=1, recon_loss_method
     summed loss value for whole batch
 
     """
-
+    # Mean squared error
     criterion_mse = nn.MSELoss(size_average=False)
     mse = criterion_mse(recon_x.view(-1, 2, window_size),
                         x.view(-1, 2, window_size))
-
-    manual_mse = np.sum(np.power(recon_x.view(-1, 2, window_size).detach().numpy() -
-                                 x.view(-1, 2, window_size).detach().numpy(), 2))
-
+    # p2 norm
     dist = torch.dist(recon_x.view(-1, 2, window_size),
                       x.view(-1, 2, window_size))
 
-    # will not function unless inputs are in interval [0,1]
-    # bce seemed to return same value as mse in external tests
-    # bce = nn.functional.binary_cross_entropy(recon_x.view(-1, 2, window_size),
-    #                                          x.view(-1, 2, window_size), size_average=False)
-
+    # kl-divergance
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    # print('MSE:', mse.item(), '\n',
-    #       'dist', dist.item(), '\n'
-    #       'manual_mse', man_mse, '\n',
-    #       'bce', bce.item(), '\n',
-    #       'KLD', KLD.item(), '\n')
 
     if recon_loss_method == 'mse':
         recon_loss = mse
@@ -387,26 +385,22 @@ def train(epoch, model, optimizer, train_loader, beta=1, recon_loss_method='mse'
     for batch_idx, (data, _) in enumerate(train_loader):
         data = Variable(data)
 
-        optimizer.zero_grad()
-        recon_batch, mu, logvar, _ = model(data)
-        loss = loss_function(recon_batch,
+        optimizer.zero_grad()  # 1. zero grad after each batch
+        recon_batch, mu, logvar, _ = model(data)  # 2. run training data through network
+        loss = loss_function(recon_batch,  # 3. calculate the ELBO value on result
                              data,
                              mu,
                              logvar,
                              window_size=data.shape[-1],
                              beta=beta,
                              recon_loss_method=recon_loss_method)
-        # print('batch:', batch_idx, 'loss:', loss.item())
-        loss.backward()
+        loss.backward()  # 4. calculated gradients
 
         # 'loss' is the SUM of all vector to vector losses in batch
-        train_loss += loss.item()  # * data.size(0)  # originally
-
-        # print('batch:', batch_idx, 'to add to total:', loss.item())
-        optimizer.step()
+        train_loss += loss.item()
+        optimizer.step()  # Update parameters
 
     train_loss /= len(train_loader.dataset)
-    # print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss), len(train_loader.dataset))
     return train_loss
 
 
@@ -446,10 +440,9 @@ def test(epoch, model, test_loader, beta=1, recon_loss_method='mse'):
                                  data.shape[-1],
                                  beta=beta,
                                  recon_loss_method=recon_loss_method)
-            test_loss += loss.item()  # * data.size(0) # originally
+            test_loss += loss.item()
 
         test_loss /= len(test_loader.dataset)
-        # print('====> Test set loss: {:.4f}'.format(test_loss))
     return test_loss
 
 
