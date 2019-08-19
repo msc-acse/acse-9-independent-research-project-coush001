@@ -21,8 +21,7 @@ def test_base_case_UMAP():
 
     # run the UMAP model on input
     umap = UmapModel(Input1)
-    umap.reduce()
-    umap.to_2d(50, 0.001)
+    umap.reduce(umap_neighbours=50, umap_dist=0.001)
 
     # load the documented base case result as np array
     UMAP_base_case = np.load('test_cases/Flat-top12,bottom52,UMAP-neigh50,dist0.001.npy')

@@ -1,3 +1,4 @@
+# Author (GitHub alias): coush001
 """ core module contains the main classes to run unsupervised machine learning on seismic data """
 
 # standard imports
@@ -7,7 +8,6 @@ import scipy
 import copy
 import random
 import os
-import datetime
 
 # Machine learning tools
 import umap
@@ -15,13 +15,12 @@ from sklearn.linear_model import LinearRegression
 import torch
 import torch.utils.data
 from torch import optim
-from torch.autograd import Variable
 import torch.nn as nn
 from torch.utils.data import TensorDataset
 from sklearn.model_selection import ShuffleSplit
 from sklearn.decomposition import PCA
 
-# File load and save imports
+# Utils import
 from .utils import *
 
 # live loss plots
@@ -51,7 +50,6 @@ class DataHolder:
         """
         Initialisation function to set the name and specify data ranges.
 
-
         Parameters
         ----------
         field_name : string
@@ -73,8 +71,6 @@ class DataHolder:
         self.far = None
         self.twt = None
         self.horizon = None
-
-        self.wells = {}
 
     def add_near(self, fname):
         """
@@ -114,7 +110,7 @@ class DataHolder:
                                      inlines=self.inlines,
                                      xlines=self.xlines)
         assert (self.twt == twt
-                ).all, "This twt does not match the twt from the previous segy"
+                ).all, "Mismatch in twt data structure between near and far."
         return
 
     def add_horizon(self, fname):
@@ -135,27 +131,6 @@ class DataHolder:
             load_horizon(fname, inlines=self.inlines, xlines=self.xlines))
         return
 
-    def add_well(self, well_id, well_i, well_x):
-        """
-        Method to add well to a dictionary.
-
-        Parameters
-        ----------
-        well_id : str
-            Identification for the well.
-        well_i : int
-            Position of well in inlines.
-        well_x : int
-            Position of well in the cross-lines.
-
-        Returns
-        -------
-        None
-
-        """
-        self.wells[well_id] = [well_i, well_x]
-        return
-
 
 class Processor:
     """
@@ -168,8 +143,8 @@ class Processor:
     twt : array_like
         Two way time, derived from DataHolder.
     out : array_like
-        The output attribute used for each processing routine.
-        Stored in list form: [near, far].
+        The output attribute through each processing routine.
+        Stored in list form: [near-offset, far-offset].
     attributes : dict
         A dictionary to contain the array of attributes of the seismic data.
         Examples are horizon depth and AVO derived fluid factor
@@ -230,7 +205,7 @@ class Processor:
 
         return out  # list of far and near, flattened amplitudes shape (twt, x1,x2)
 
-    def trim(self, data, top_index=0, bottom_index=232):
+    def crop(self, data, top_index=0, bottom_index=232):
         """
         Without flattening retrieve a vertically cropped segment of the seismic block.
 
@@ -277,12 +252,13 @@ class Processor:
         # input should be (twt,x1,x2)
         for i in range(len(data)):
             data[i] = np.transpose(data[i], (1, 2, 0))
+
         # output (x1,x2,twt)
         return data
 
     def normalise(self, data):
         """
-        Normalise data around a given 'well' sample area.
+        Normalise data
 
         Parameters
         ----------
@@ -295,13 +271,8 @@ class Processor:
         Normalised data arrays
 
         """
-        well_i = 38
-        well_x = 138
         out = []
         for i in data:
-            # well_variance = np.mean(
-            #     np.std(i[well_i - 2:well_i + 1, well_x - 2:well_x + 1], 2))
-            # i /= well_variance
             variance = np.mean(
                 np.std(i, 2))
             i /= variance
@@ -309,7 +280,7 @@ class Processor:
 
         return out
 
-    def to_2d(self, data):
+    def collapse_dimension(self, data):
         """
         Flatten data from two spatial dimensions to one.
 
@@ -322,7 +293,7 @@ class Processor:
         Returns
         -------
         list form [far, near]
-        shape of (number_traces, twt)
+        shape of each: (number of traces, twt)
 
 
         """
@@ -336,11 +307,11 @@ class Processor:
         ----------
         data : array_like
             List amplitudes in the form [far, near]
-            Each set expected to be of shape (number_traces,twt)
+            Each set expected to be of shape (number of traces, twt)
 
         Returns
         -------
-        Single three dimensional array, shape (number_traces, 2, twt).
+        Single three dimensional array, shape (number of traces, 2, twt).
         Second dimension references the far or near offset.
 
         """
@@ -380,9 +351,8 @@ class Processor:
         """
         Call function controls the full processing routine.
 
-        A new call can be made repeatedly on an existing object as many times as needed.
-        The routine will be run from the raw data each time and output a processed array and
-        attributes. Only flatten OR crop OR neither is accepted NOT both.
+        The routine will be run from the raw data with each call to process the output
+        Only flatten OR crop OR neither is permitted, NOT both.
 
         Parameters
         ----------
@@ -394,47 +364,46 @@ class Processor:
         crop : list
             specifying crop parameters:
                 crop[0] : Bool
-                crop[1] : int specifying top add
-                crop[2] : int specifying below add
+                crop[1] : int specifying top index
+                crop[2] : int specifying below index
 
-
-        normalise : list
-                List specifying normalisation parameters:
-                flatten[0] : Bool specifying whether to run flattening method
-                flatten[1] : int specifying top add
-                flatten[2] : int specifying below add
-
+        normalise : bool
 
         Returns
         -------
-        List of output array and attributes
+        List : [output array, attributes dictionary]
         Output array is three dimensional numpy array, of shape (number_samples, 2, twt)
         Values of attribute dict in shape (number_samples)
 
         """
-        self.out = copy.copy(self.raw)  # Set out attribute to raw data
+        # 1. Copy raw data into 'out'
+        self.out = copy.copy(self.raw)
 
-        if flatten[0]:  # Flatten samples with top add, and bellow add
+        # 2. Flatten if chosen
+        if flatten[0]:
             self.out = self.flatten(self.out, flatten[1], flatten[2])
 
-        elif crop[0]:  # trim seismic from flatten[1] to flatten[2]
-            self.out = self.trim(self.out, crop[1], crop[2])
+        # 3. Crop if chosen and not flattened
+        elif crop[0]:
+            self.out = self.crop(self.out, crop[1], crop[2])
 
-        self.out = self.roll_axis(self.out)  # Reorder axis of data to [x1,x2,twt]
+        # 4. Reorder axis of data to [x1,x2,twt]
+        self.out = self.roll_axis(self.out)
 
-        if normalise:  # Normalise samples
+        # 5. Normalise data
+        if normalise:
             self.out = self.normalise(self.out)
 
-        # flatten to 2d (traces, twt)
-        self.out = self.to_2d(self.out)
+        # 6. Concatenate array (x1, x2, twt) -> (all_traces, twt)
+        self.out = self.collapse_dimension(self.out)
 
-        # Find fluid factor, add to attributes
+        # 7. Find fluid factor, add to attributes dictionary
         self.run_AVO()
 
-        # condition attributes to 1d arrays
+        # 8. Condition attributes to 1d arrays
         self.condition_attributes()
 
-        #  Stack the traces for output
+        # 9. Stack the traces for output
         self.out = self.stack_traces(self.out)
         print('Processor has created an output with shape: ', self.out.shape)
 
@@ -454,7 +423,7 @@ class ModelAgent:
     input_dimension : int
         The dimension of the each input trace, used for VAE model initialisation.
     embedding : array_like
-        Unsupervised low-dimension representation of the input.
+        Unsupervised lower-dimension representation of the input.
     two_dimensions : array_like
         The two dimensional representation used for visualisation, either direct from model or
         represented via umap algorithm
@@ -492,7 +461,7 @@ class ModelAgent:
 
     def to_2d(self, umap_neighbours=50, umap_dist=0.001, verbose=False):
         """
-        Takes abritrary dimension of embedding and converts to two dimensions via umap.
+        Takes arbitrary dimension of embedding and converts to two dimensions via umap algorithm.
 
         Parameters
         ----------
@@ -580,7 +549,7 @@ class PcaModel(ModelAgent):
         Modifies embedding attribute via generation of the low dimensional representation.
 
         """
-        concat_near_far = self.concat()  # collapse the near far data into 1 dimension
+        concat_near_far = self.concat()  # concatenate the near and far offset data into 1 dimension
 
         pca_model = PCA(n_components=n_components)
         p_components = pca_model.fit_transform(concat_near_far)
@@ -602,15 +571,25 @@ class UmapModel(ModelAgent):
         super().__init__(data)
         self.name = 'UMAP'
 
-    def reduce(self):
+    def reduce(self, umap_neighbours=50, umap_dist=0.001, verbose=False):
         """
-        Prepare self.embedding for umap_2d method.
+        Run the umap algorithm via to_2d() method
 
-        Concatenate the near/far offset amplitudes to generate 2d array for the umap model.
+        Parameters
+        ----------
+        umap_neighbours : int
+            number of neighbours considered in the umap algorithm
+        umap_dist : float
+            minimum distance between output points
+        verbose : bool
+            choose to run with verbose output
+
+        Returns
+        -------
 
         """
         self.embedding = self.concat()  # collapse the near far data into 1 dimension
-        self.to_2d()
+        self.to_2d(umap_neighbours=umap_neighbours, umap_dist=umap_dist, verbose=verbose)
 
     def save_nn(self, name):
         raise Exception('Method is not appropriate for this type of model - No Neural Network in UMAP!')
@@ -621,7 +600,7 @@ class UmapModel(ModelAgent):
 
 class VaeModel(ModelAgent):
     """
-    Runs the VAE model to reduce the seismic data to an arbitrary sized dimension, visualised in 2 via UMAP.
+    Runs the VAE model to reduce the seismic data to an arbitrary sized dimension
     """
     def __init__(self, data):
         super().__init__(data)
@@ -671,7 +650,7 @@ class VaeModel(ModelAgent):
                                                       shuffle=False,
                                                       **kwargs)
 
-    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, recon_loss_method='mse'):
+    def train_vae(self, epochs=10, hidden_size=2, lr=0.0005, recon_loss_method='mse'):
         """
         Handles the training of the vae model.
 
@@ -692,10 +671,9 @@ class VaeModel(ModelAgent):
 
         """
         set_seed(42)  # Set the random seed
-        self.model = VAE(hidden_size,
-                         self.input.shape)  # Inititalize the model
+        self.model = VAE(hidden_size, self.input.shape)  # Initialise model
 
-        # Create a gradient descent optimizer
+        # Create optimizer
         optimizer = optim.Adam(self.model.parameters(),
                                lr=lr,
                                betas=(0.9, 0.999))
@@ -732,7 +710,7 @@ class VaeModel(ModelAgent):
         _, zs = forward_all(self.model, self.all_loader)
         return zs.numpy()
 
-    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, recon_loss_method='mse', plot_loss=True):
+    def reduce(self, epochs=10, hidden_size=2, lr=0.0005, recon_loss_method='mse', plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -768,7 +746,7 @@ class VaeModel(ModelAgent):
 
 class BVaeModel(ModelAgent):
     """
-    Runs the VAE model to reduce the seismic data to an arbitrary sized dimension, visualised in 2 via UMAP.
+    Runs the VAE model to reduce the seismic data to an arbitrary sized dimension.
     """
     def __init__(self, data):
         super().__init__(data)
@@ -818,7 +796,7 @@ class BVaeModel(ModelAgent):
                                                       shuffle=False,
                                                       **kwargs)
 
-    def train_vae(self, epochs=5, hidden_size=8, lr=1e-2, beta=10, recon_loss_method='mse'):
+    def train_vae(self, epochs=10, hidden_size=2, lr=0.0005, beta=5, recon_loss_method='mse'):
         """
         Handles the training of the vae model.
 
@@ -883,7 +861,7 @@ class BVaeModel(ModelAgent):
         _, zs = forward_all(self.model, self.all_loader)
         return zs.numpy()
 
-    def reduce(self, epochs=5, hidden_size=8, lr=1e-2, beta=5, recon_loss_method='mse', plot_loss=True):
+    def reduce(self, epochs=10, hidden_size=2, lr=0.0005, beta=5, recon_loss_method='mse', plot_loss=True):
         """
         Controller function for the vae model.
 
@@ -920,7 +898,7 @@ class BVaeModel(ModelAgent):
         self.embedding = self.run_vae()  # arbitrary dimension output from bVAE
 
 
-def plot_agent(model, attr='FF'):
+def plot_agent(model, attr='FF', figsize=(10,10), save_path=False):
     """
     Plots a low dimensional representation of seismic data found via model analysis.
 
@@ -932,13 +910,17 @@ def plot_agent(model, attr='FF'):
     attr : str
         Represents the key for the attributes dictionary. Controls the attribute to be represented via a colour-scale
         in the resulting plot.
+    figsize : tuple
+        optional setting of figure size
+    save_path : Bool(default) / str
+        String pathname to save image as
 
     Returns
     -------
     pyplot axes object.
 
     """
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
     ax.set(xlabel='Latent Variable 1',
            ylabel='Latent Variable 2',
            title='Model used: {}, Trace Attribute: {}'.format(
@@ -950,5 +932,7 @@ def plot_agent(model, attr='FF'):
                          c=model.attributes[attr])
     cbar = plt.colorbar(scatter, shrink=0.7, orientation='vertical')
     cbar.set_label(label=attr, rotation=90, labelpad=10)
+    if save_path:
+        plt.savefig(save_path)
     plt.show()
     return scatter
