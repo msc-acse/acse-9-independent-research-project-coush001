@@ -5,6 +5,9 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 
 ---
 
+
+---
+
 # Getting started:
 
 ### Installation:
@@ -20,17 +23,18 @@ import SeismicReduction
 
 ### Example data:
 * The example data set used in the project can be acquired from this link:<br>
-[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- curteousy of Stanford University*
+[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- Curteousy of Stanford University*
 - Only the following files need to be extracted:
 > '3d_farstack.sgy', '3d_nearstack.sgy', 'Top_Heimdal_sebset.txt'
 
+- These files are also uploaded to this repo under in the data/ folder.
 
 ### Usage:
 There are two ways to utilise the software, each with different merits:
 1. **Direct Python Scripting:** Access the python package tools directly.
     * Access to model load/save capabilities for key models, or models run for large number of epochs.
-    * Ability to nest runs in a list to efficiently explore a regular step of parameters.
-    * Ability to save the scripts of particularly useful analysis
+    * Ability to nest runs in script routines to efficiently explore a parameter space.
+    * Ability to save the scripts of particularly useful analysis workflows.
     * Ability to utilise distributed computing for large jobs without dependance on a notebook.
     
 2. **Jupyter Notebook GUI:** Interface with very a straighforward self-explanatory graphical interface.
