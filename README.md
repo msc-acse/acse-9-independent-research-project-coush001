@@ -271,19 +271,35 @@ Please see the guidlines for project contributions [CONTRIBUTING](./CONTRIBUTING
 ---
 
 # Testing
-Continuous integration is deployed using the travis framework.
+* Continuous integration is deployed using the travis framework.
+* Local testing is run with the pytest module via running the folling in the root directory:
+```bash
+~ pytest
+```
+or
+```bash
+~ pytest test_units.py
+```
+or
+```bash
+~ pytest test_integration.py
+```
 
 ### Build Status
 [![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
 
-### Integration testing
-Integration testing involves running an anaylis using the current state of software and compares the final output against a documented and verified base case result. These tests ensure the full analysis pipeline is working as expected and is creating the expected outputs. Due to the stochastic nature of the algorithms, these are standardised with random seed setting.
+
+
+### Integration testing: ___test_integration.py___ 
+
+Integration testing involves running an analysis using the current state of software and compares the final output against a documented and verified base case result. These tests ensure the full analysis pipeline is working as expected and is creating the expected outputs. Due to the stochastic nature of the algorithms, these are standardised with setting the random seed.
 
 Currently integration tests have to be run locally as there are some undiagnosed errors that appear when run with travis.
 
-### Unit testing
+### Unit testing: ___test_units.py___
+
 Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs.
-These are particularly focussed on running checks on the shapes of inputs and outputs from the functions and methods to ensure the expected data is being generated in the correct way.
+These are particularly focussed on running checks on the shapes of inputs and outputs from the functions and methods to ensure the expected data is being generated and passed through each component in the correct way.
 
 ---
 
