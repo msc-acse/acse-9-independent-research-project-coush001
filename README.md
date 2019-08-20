@@ -181,8 +181,9 @@ bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', 
 ```
 
 ### 1.4.2 Two dimension UMAP embedding
-* Regardless of the model, after **.reduce()**, **.to_2d()** must be run to convert to a 2d representation of the embedding via umap. <br>
-**Note:** If already reduced to two dimensions via the model this method must still be run to configure internal data structures.
+* All models **except UmapModel** need to be run with **.to_2d()** to convert to a 2d representation of the embedding via umap. <br>
+**Note:** If already reduced to two dimensions via the model this method **must** still be run to configure internal data structures.
+
 * **___anyModel___.to_2d(n_neighbours, min_dist, verbose=False)**:
    * Parameters:
       1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
