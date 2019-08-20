@@ -257,6 +257,8 @@ Via the use of pickling (the python module that allows for saving and loading of
 
 # Contributing
 
+Please see the guidlines for project contributions [CONTRIBUTING](./CONTRIBUTING.md)
+
 ---
 
 # Testing
