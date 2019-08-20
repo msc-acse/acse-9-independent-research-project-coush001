@@ -5,6 +5,9 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 
 ---
 
+
+---
+
 # Getting started:
 
 ### Installation:
@@ -20,17 +23,18 @@ import SeismicReduction
 
 ### Example data:
 * The example data set used in the project can be acquired from this link:<br>
-[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- curteousy of Stanford University*
+[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- Curteousy of Stanford University*
 - Only the following files need to be extracted:
 > '3d_farstack.sgy', '3d_nearstack.sgy', 'Top_Heimdal_sebset.txt'
 
+- These files are also uploaded to this repo under in the [data/](./data/) folder.
 
 ### Usage:
 There are two ways to utilise the software, each with different merits:
 1. **Direct Python Scripting:** Access the python package tools directly.
     * Access to model load/save capabilities for key models, or models run for large number of epochs.
-    * Ability to nest runs in a list to efficiently explore a regular step of parameters.
-    * Ability to save the scripts of particularly useful analysis
+    * Ability to nest runs in script routines to efficiently explore a parameter space.
+    * Ability to save the scripts of particularly useful analysis workflows.
     * Ability to utilise distributed computing for large jobs without dependance on a notebook.
     
 2. **Jupyter Notebook GUI:** Interface with very a straighforward self-explanatory graphical interface.
@@ -38,7 +42,14 @@ There are two ways to utilise the software, each with different merits:
     * Quick and easy to run an analysis with a few button clicks without having to write code.
     * Pickle checkpointing allows for quick runs without having to repeat costly dataloading (similar benefits with Jupyter cells)
   
+### Example scripts:
+* Example scripts can be found in the [Example_Scripts/](./Example_Scripts/) folder within this repo
+* Both plain .py script and a jupyter notebook are available for usage to gain familliarity with the package.
+  
 ---
+Code Documentation
+==================
+
 
 ## 1. Direct python scripting:
 
@@ -50,7 +61,6 @@ The tool is delivered via a series of classes delivering the following workflow:
   1. Model embedding to a chosen dimension *Example: PCA, VAE..*
   2. Umap embedding to two dimensions
 5. Visualisation
-  1. Choice of attribute (colour scale) overlay *Example: fluid factor, horizon depth*
 
 
 ## SeismicReduction Documentation
@@ -139,20 +149,21 @@ bvae = BVaeModel(input)
 ```
 
 2. Perform model analysis/training/dimensionality reduction via **.reduce()** method:
-    * **PcaModel**
+    * **PcaModel.reduce(n_components)**
         * Parameters:
             1. n_components : *number of prinicpal components for pca to reduce to*
-    * **UmapModel**
+    * **UmapModel.reduce(umap_neighbours, umap_dist)**
         * Parameters:
-            1. None : *method used to prepare object for umap algorithm in .to_2d() see later...*
-    * **VaeModel**
+            1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
+            2. umap_dist : the min_dist parameter used by the umap algorithm
+    * **VaeModel.reduce(epochs, hiddens_size, lr, recon_loss_method='dist, plot_loss=False)**
         * Parameters:
             1. epochs : *number of epochs to train model on*
             2. hidden_size : *dimension used in latent space*
             3. lr : *learning rate for model training*
             4. recon_loss_method : *loss function used for reconstruction loss in ELBO*
             5. plot_loss : *bool to control live loss plotting functionality*
-    * **BVaeModel**
+    * **BVaeModel.reduce(epochs, hiddens_size, lr, beta, recon_loss_method='dist, plot_loss=False)**
         * Parameters:
             1. epochs : *number of epochs to train model on*
             2. hidden_size : *dimension used in latent space*
@@ -170,9 +181,10 @@ bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', 
 ```
 
 ### 1.4.2 Two dimension UMAP embedding
-* Regardless of the model, after **.reduce()**, **.to_2d()** must be run to convert to a 2d representation of the embedding via umap. <br>
-**Note:** If already reduced to two dimensions via the model this method must still be run to configure internal data structures.
-* **.to_2d()**:
+* All models **except UmapModel** need to be run with **.to_2d()** to convert to a 2d representation of the embedding via umap. <br>
+**Note:** If already reduced to two dimensions via the model this method **must** still be run to configure internal data structures.
+
+* **___anyModel___.to_2d(n_neighbours, min_dist, verbose=False)**:
    * Parameters:
       1. umap_neighbours : the n_neighbours parameter used by the umap algorithm
       2. umap_dist : the min_dist parameter used by the umap algorithm
@@ -186,11 +198,13 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
 ### 1.5 Visualisation
-* Visualisation is run by a standalone function **plot_agent()**:
+* Visualisation is run by a standalone function **plot_agent(model, attr='FF', figsize=(10,10), save_path=False)**:
 
 * Parameters
     1. model : a model object initialised, embedded, and converted to 2d
     2. attr : to plot fluid factor use "FF", for horizon depth use "horizon"
+    3. figsize : tuple of desired output figure size
+    4. save_path : pathname string to save figure under, will not be saved if not specified. Ensure to use valid file ending
     
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
@@ -253,22 +267,40 @@ Via the use of pickling (the python module that allows for saving and loading of
 
 # Contributing
 
+Please see the guidlines for project contributions [CONTRIBUTING](./CONTRIBUTING.md)
+
 ---
 
 # Testing
-Continuous integration is deployed using the travis framework.
+* Continuous integration is deployed using the travis framework.
+* Local testing is run with the pytest module via running the folling in the root directory:
+```bash
+~ pytest
+```
+or
+```bash
+~ pytest test_units.py
+```
+or
+```bash
+~ pytest test_integration.py
+```
 
 ### Build Status
 [![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
 
-### Integration testing
-Integration testing involves running an anaylis using the current state of software and compares the final output against a documented and verified base case result. These tests ensure the full analysis pipeline is working as expected and is creating the expected outputs. Due to the stochastic nature of the algorithms, these are standardised with random seed setting.
+
+
+### Integration testing: ___test_integration.py___ 
+
+Integration testing involves running an analysis using the current state of software and compares the final output against a documented and verified base case result. These tests ensure the full analysis pipeline is working as expected and is creating the expected outputs. Due to the stochastic nature of the algorithms, these are standardised with setting the random seed.
 
 Currently integration tests have to be run locally as there are some undiagnosed errors that appear when run with travis.
 
-### Unit testing
+### Unit testing: ___test_units.py___
+
 Unit testing is employed to ensure the functions and methods of the software are delivering the expected outputs.
-These are particularly focussed on running checks on the shapes of inputs and outputs from the functions and methods to ensure the expected data is being generated in the correct way.
+These are particularly focussed on running checks on the shapes of inputs and outputs from the functions and methods to ensure the expected data is being generated and passed through each component in the correct way.
 
 ---
 
