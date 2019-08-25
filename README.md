@@ -198,14 +198,20 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
 ### 1.5 Visualisation
-* Visualisation is run by a standalone function **plot_agent(model, attr='FF', figsize=(10,10), save_path=False)**:
+* Visualisation is run by a standalone function:
+* **plot_agent(model, attr='FF', figsize=(10,10), save_path=False, cmap='plasma', vmin=False, vmax=False)**:
 
 * Parameters
     1. model : a model object initialised, embedded, and converted to 2d
     2. attr : to plot fluid factor use "FF", for horizon depth use "horizon"
     3. figsize : tuple of desired output figure size
     4. save_path : pathname string to save figure under, will not be saved if not specified. Ensure to use valid file ending
+    5. cmap : string referring to matplotlib colormap for plotting attribute
+    6. vmin : specify the lower range of the colormap range, min attribute value asigned by default if false
+    7. vax : specify the upper range of the colormap range, max attribute value asigned by default if false
     
+* see [Matplotlib colormap page](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) for a more information of colormap choices.
+
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
 plot_agent(model=pca, attr="FF")
