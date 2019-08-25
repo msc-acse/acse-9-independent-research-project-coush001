@@ -3,8 +3,6 @@
 
 This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. Specifically the tools allow for efficient recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
----
-
 
 ---
 
@@ -47,13 +45,12 @@ There are two ways to utilise the software, each with different merits:
 * Both plain .py script and a jupyter notebook are available for usage to gain familliarity with the package.
   
 ---
-Code Documentation
-==================
+SeismicReduction Documentation
+==============================
 
+## 1. Package overview:
 
-## 1. Direct python scripting:
-
-The tool is delivered via a series of classes delivering the following workflow:
+The tool is delivered via a series of classes following the logical workflow:
 1. Package import
 2. Data Loading
 3. Data Processing
@@ -62,17 +59,14 @@ The tool is delivered via a series of classes delivering the following workflow:
   2. Umap embedding to two dimensions
 5. Visualisation
 
-
-## SeismicReduction Documentation
-
-### 1.1 Importing
+### 1 Importing
 * Run via standard python import protocol. Can also choose to import individual classes but there isn't many so the namespace will not be cluttered.
 ```python
 from SeismicReduction import *
 ```
-### 1.2 Data loading
+### 2 Data loading
 * Use class **DataHolder**. <br>
-1. Initialisation:
+2.1. Initialisation:
     * Parameters:
        1. Dataset name : self explanatory
        2. inline range : in the form [start, stop, step]
@@ -82,7 +76,7 @@ from SeismicReduction import *
 # init
 dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 ```
-2. Loading the near and far offset amplitudes **.add_near(), .add_far()**:.
+2.2. Loading the near and far offset amplitudes **.add_near(), .add_far()**:.
     * Parameter:
         1. Relative file pathnames <br>
 * *files **must** be in .sgy format*
@@ -91,7 +85,7 @@ dataholder = DataHolder("Glitne", [1300, 1502, 2], [1500, 2002, 2])
 dataholder.add_near('./data/3d_nearstack.sgy');
 dataholder.add_far('./data/3d_farstack.sgy');
 ```
-3. Loading the horizon **.add_horizon()**:
+2.3. Loading the horizon **.add_horizon()**:
     * Parameter:
         1. Relative file pathname
 **Note:** file format must be .txt with columns: inline, crossline, twt
@@ -99,9 +93,9 @@ dataholder.add_far('./data/3d_farstack.sgy');
 # add the horizon depth
 dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 ```
-### 1.3 Data processing
+### 3 Data processing
 * Use class **Processor**. 
-1. Initialisation:
+3.1. Initialisation:
     * Initialise **once** per dataset
     * Parameter:
         1. DataHolder object. <br>
@@ -109,7 +103,7 @@ dataholder.add_horizon('./data/Top_Heimdal_subset.txt')
 # Create a processor object for the data
 processor = Processor(dataholder)
 ```
-2. Input generation via __\_\_call\_\___  method:
+3.2. Input generation via __\_\_call\_\___  method:
     * Parameters:
        1. flatten : three element list with three elements [bool, int: above add, int: below add]
            * [0] : *bool* : whether to run horizon flattening in the dataset
@@ -127,7 +121,7 @@ processor = Processor(dataholder)
 input = processor(flatten=[True, 12, 52], crop=[False, 0, 0], normalise=True)
 input2 = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
 ```
-### 1.4 Model analysis
+### 4 Model analysis
 * The available unsuperverised machine learning techniques are available in the following classes:
     1. Principal Component Analysis: **PcaModel**
     2. Uniform Manifold Approximation: **UmapModel**
@@ -136,7 +130,7 @@ input2 = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
 
 * Every model follows the exact same steps with variation to the .reduce() parameters dependant on specific model. 
 
-1. Intialisation:
+4.1. Intialisation:
     * Parameter:
         1. Data input generated on the processor.__call__()
 ```python
@@ -148,7 +142,7 @@ bvae = BVaeModel(input)
 
 ```
 
-2. Perform model analysis/training/dimensionality reduction via **.reduce()** method:
+4.2.1 Perform model analysis/training/dimensionality reduction via **.reduce()** method:
     * **PcaModel.reduce(n_components)**
         * Parameters:
             1. n_components : *number of prinicpal components for pca to reduce to*
@@ -180,7 +174,7 @@ vae.reduce(epochs=10, hidden_size=2, lr=0.01, recon_loss_method='mse', plot_loss
 bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', plot_loss=True)
 ```
 
-### 1.4.2 Two dimension UMAP embedding
+4.2.2 Two dimension UMAP embedding
 * All models **except UmapModel** need to be run with **.to_2d()** to convert to a 2d representation of the embedding via umap. <br>
 **Note:** If already reduced to two dimensions via the model this method **must** still be run to configure internal data structures.
 
@@ -197,7 +191,7 @@ vae.to_2d(umap_neighbours=50, umap_dist=0.02)
 bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
 
-### 1.5 Visualisation
+### 5 Visualisation
 * Visualisation is run by a standalone function:
 * **plot_agent(model, attr='FF', figsize=(10,10), save_path=False, cmap='plasma', vmin=False, vmax=False)**:
 
@@ -256,7 +250,7 @@ PlotAgent(loadedmodel)
 ```
 ---
 
-## 2. Notebook GUI:
+## Notebook GUI:
 A jupyter notebook GUI that captures all of the tools functionality without need to edit code has been created and is available for download from this repo *'GUI_tool.ipynb'*.
 
 The tool is delivered via jupyter widgets and follows the same workflow as the api tools:
