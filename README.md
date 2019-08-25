@@ -208,9 +208,9 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
     4. save_path : pathname string to save figure under, will not be saved if not specified. Ensure to use valid file ending
     5. cmap : string referring to matplotlib colormap for plotting attribute
     6. vmin : specify the lower range of the colormap range, min attribute value asigned by default if false
-    7. vax : specify the upper range of the colormap range, max attribute value asigned by default if false
+    7. vmax : specify the upper range of the colormap range, max attribute value asigned by default if false
     
-* see [Matplotlib colormap page](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) for a more information of colormap choices.
+* see [Matplotlib colormap page](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) for more information of colormap choices.
 
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
