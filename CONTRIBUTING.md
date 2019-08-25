@@ -2,7 +2,7 @@
 How to contribute
 ---
 
-Third-party patches are welcomed for improving SeismicReduction.
+Third-party modifications, additions and bug fixes are welcomed for improving SeismicReduction.
 
 ---
 
