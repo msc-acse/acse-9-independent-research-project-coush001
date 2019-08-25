@@ -898,7 +898,7 @@ class BVaeModel(ModelAgent):
         self.embedding = self.run_vae()  # arbitrary dimension output from bVAE
 
 
-def plot_agent(model, attr='FF', figsize=(10,10), save_path=False):
+def plot_agent(model, attr='FF', figsize=(10,10), save_path=False, cmap='plasma', vmin=False, vmax=False):
     """
     Plots a low dimensional representation of seismic data found via model analysis.
 
@@ -914,12 +914,26 @@ def plot_agent(model, attr='FF', figsize=(10,10), save_path=False):
         optional setting of figure size
     save_path : Bool(default) / str
         String pathname to save image as
+    cmap : str
+        Specifiy the matplotlib cmap to use examples: 'siesmic', 'plasma'
+    vmin : float
+        Specifies the minimum value to the color map scale
+    vmax : float
+        Specifies the maximum value to the color map scale
 
     Returns
     -------
     pyplot axes object.
 
     """
+
+    if not vmin:
+        vmin = np.min(model.attributes[attr])
+
+    if not vmax:
+        vmax = np.max(model.attributes[attr])
+
+
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     ax.set(xlabel='Latent Variable 1',
            ylabel='Latent Variable 2',
@@ -929,7 +943,11 @@ def plot_agent(model, attr='FF', figsize=(10,10), save_path=False):
     scatter = ax.scatter(model.two_dimensions[:, 0],
                          model.two_dimensions[:, 1],
                          s=1.0,
-                         c=model.attributes[attr])
+                         c=model.attributes[attr],
+                         cmap=cmap,
+                         vmin=vmin,
+                         vmax=vmax)
+
     cbar = plt.colorbar(scatter, shrink=0.7, orientation='vertical')
     cbar.set_label(label=attr, rotation=90, labelpad=10)
     if save_path:
