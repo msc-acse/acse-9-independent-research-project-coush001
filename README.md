@@ -13,9 +13,9 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 ### Installation:
 - The package is hosted at https://pypi.org/project/SeismicReduction/
 
-- **Note:** if you are using a **windows** or **linux** machine you must **first** run a seperate installation of pytorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users
+- **Note:** if you are using a **windows** or **linux** machine you must **first** run a seperate installation of PyTorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users.
 
-1. Install PyTorch for Windows or Linuz:
+1.  Install PyTorch for Windows or Linux:
 ```bash
 pip3 install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
@@ -25,7 +25,7 @@ pip3 install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch
 pip install SeismicReduction
 ```
 
-3. Install 'jupyter' package for 'GUI tool' use only (ensure this is installed for rendering of GUI):
+3.  Install 'jupyter' package for 'GUI tool' use only (ensure this is installed for rendering of GUI):
 ```python
 pip install jupyter
 ```
