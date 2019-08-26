@@ -15,7 +15,7 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 
 - **Note:** if you are using a **windows** or **linux** machine you must **first** run a seperate installation of PyTorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users.
 
-1.  Install PyTorch for Windows or Linux:
+1.  Install PyTorch for Windows or Linux (not required for Mac):
 ```bash
 pip3 install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
