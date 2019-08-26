@@ -4,7 +4,7 @@ from distutils.core import setup
 setup(
   name = 'SeismicReduction',         # How you named your package folder (MyLib)
   packages = ['SeismicReduction'],   # Chose the same as "name"
-  version = 'v1.0',      # Start with a small number and increase it with every change you make
+  version = 'v1.1',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here:
   description = 'Perform unsupervised machine learning on seismic data.',   # Give a short description about your library
   # long_description=long_description,
@@ -12,7 +12,7 @@ setup(
   author = 'coush001',                   # Type in your name
   author_email = 'coush001@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/coush001',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/msc-acse/acse-9-independent-research-project-coush001/archive/v1.0.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/msc-acse/acse-9-independent-research-project-coush001/archive/v1.1.tar.gz',    # I explain this later on
   keywords = ['Seismic Data', 'Unsupervised Learning', 'Machine Learning', 'VAE'],   # Keywords that define your package best
   install_requires=['livelossplot',
                     'matplotlib',
@@ -23,7 +23,6 @@ setup(
                     'segypy',
                     'torch',
                     'torchvision',
-                    'umap',
                     'umap-learn',
       ],
   classifiers=[
