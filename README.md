@@ -16,6 +16,11 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 ```bash
 pip install SeismicReduction
 ```
+- Ensure the python 'jupyter' package is installed for the GUI tool to render properly
+```python
+pip install jupyter
+```
+
 - The raw package tools are now available in any python script or jupyter notebook using standard import:
 ```python
 import SeismicReduction
