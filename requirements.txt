@@ -8,3 +8,5 @@ segypy==0.57
 torch==1.0.1.post2
 torchvision==0.2.2.post3
 umap-learn==0.3.8
+ipywidgets==7.5.1
+jupyter
