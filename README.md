@@ -1,4 +1,6 @@
-# SeismicReduction [![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction)
+# SeismicReduction
+
+[![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction)
 ## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ##
 
 
