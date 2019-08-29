@@ -1,8 +1,6 @@
 # SeismicReduction
 
-[![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction)
-## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ##
-
+[![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction) <img alt="GitHub stars" src="https://img.shields.io/github/stars/msc-acse/acse-9-independent-research-project-coush001?style=social">
 
 This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. Specifically the tools allow for efficient recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
