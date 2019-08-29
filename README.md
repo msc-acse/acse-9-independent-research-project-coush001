@@ -1,6 +1,7 @@
 # SeismicReduction
 
 [![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction)
+[![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
 <img alt="GitHub issues" src="https://img.shields.io/github/issues/msc-acse/acse-9-independent-research-project-coush001"> 
 <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/msc-acse/acse-9-independent-research-project-coush001">
 <img alt="GitHub" src="https://img.shields.io/github/license/msc-acse/acse-9-independent-research-project-coush001">
