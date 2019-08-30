@@ -61,6 +61,6 @@ Submitting Changes
 
 Additional Resources
 ====================
-* `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
-* `General GitHub documentation <http://help.github.com/>`_
-* `GitHub pull request documentation <http://help.github.com/send-pull-requests/>`_
+* [PEP 8](https://www.python.org/dev/peps/pep-0008/)
+* [General GitHub documentation](http://help.github.com/)
+* [GitHub pull request documentation](http://help.github.com/send-pull-requests/)

@@ -19,7 +19,7 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 ### Installation:
 - The package is hosted at https://pypi.org/project/SeismicReduction/
 
-- **Note:** if you are using a **windows** or **linux** machine you must **first** run a seperate installation of PyTorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users.
+- **Note:** if you are using a **windows** or **linux** machine you must **first** run a separate installation of PyTorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users.
 
 1.  Install PyTorch for Windows or Linux (not required for Mac):
 ```bash
@@ -49,7 +49,7 @@ There are two ways to utilise the software, each with different merits:
     * Ability to save the scripts of particularly useful analysis workflows.
     * Ability to utilise distributed computing for large jobs without dependance on a notebook.
     
-2. **Jupyter Notebook GUI:** Interface with very a straighforward self-explanatory graphical interface.
+2. **Jupyter Notebook GUI:** Interface with a very straighforward self-explanatory graphical interface.
     * Easy access to analysis without need of coding experience.
     * Quick and easy to run an analysis with a few button clicks without having to write code.
     * Pickle checkpointing allows for quick runs without having to repeat costly dataloading (similar benefits with Jupyter cells)
@@ -90,9 +90,9 @@ from SeismicReduction import *
 * class **DataHolder**. <br>
 1. Initialisation:
     * Parameters:
-       1. Dataset name : self explanatory
-       2. inline range : in the form [start, stop, step]
-       3. inline range : in the form [start, stop, step] <br>
+       1. Dataset name : arb string of field name
+       2. in-line data range : in the form [start, stop, step]
+       3. cross-line data range : in the form [start, stop, step] <br>
 *(if using test dataset use the below ranges, if using new data check the info documentation for this)*
 ```python
 # init
@@ -130,11 +130,11 @@ processor = Processor(dataholder)
 ```
 2. Input generation via __\_\_call\_\___  method:
    * Parameters:
-       1. flatten : three element list with three elements [bool, int: above add, int: below add]
+       1. flatten : three element list: [bool, int: above add, int: below add]
            * [0] : *bool* : whether to run horizon flattening in the dataset
            * [1] : *above add* : choose number of above horizon amplitdue samples
            * [2] : *below add* : choose number of below horizon amplitdue samples
-       2. crop : three element list with three elements [bool, int: above index, int: below index]
+       2. crop : three element list: [bool, int: above index, int: below index]
            * [0] :  *bool* : chooses whether to run cropping on the dataset
            * [1] :  *above index* : top extent of the seismic window to be cropped
            * [2] :  *below index* : bottom extent of the seismic window to be cropped
@@ -144,12 +144,12 @@ processor = Processor(dataholder)
 * **Note:** If both flattening and cropping are true, only flattening will occur. 
 ```python
 # Generate an output, first param specifies flattening procedure, second specifies normalisation
-input = processor(flatten=[True, 12, 52], crop=[False, 0, 0], normalise=True)
-input2 = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
+flattened_input = processor(flatten=[True, 12, 52], crop=[False, 0, 0], normalise=True)
+cropped_input = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
 ```
 ### 4. Model analysis
 
-* The available unsuperverised machine learning techniques are available in the following classes:
+* The unsuperverised machine learning techniques are available in the following classes:
     1. Principal Component Analysis: **PcaModel**
     2. Uniform Manifold Approximation: **UmapModel**
     3. Variational Auto Encoder: **VaeModel**
@@ -157,16 +157,16 @@ input2 = processor(flatten=[False, 0, 0], crop=[True, 10, 232], normalise=True)
 
 * Every model follows the exact same steps with variation to the .reduce() parameters dependant on specific model. 
 
-1. Intialisation:<br>
+1. Initialisation:<br>
     * Parameter:
         1. Data input generated on the processor.__call__()
         
 ```python
 # initialise a VAE model on the input
-pca = PcaModel(input)
-umap = UmapModel(input)
-vae = VaeModel(input)
-bvae = BVaeModel(input)
+pca = PcaModel(flattened_input)
+umap = UmapModel(flattened_input)
+vae = VaeModel(flattened_input)
+bvae = BVaeModel(flattened_input)
 
 ```
 
@@ -197,7 +197,7 @@ bvae = BVaeModel(input)
 ```python
 # reduce to lower dimension
 pca.reduce(n_components=3)
-umap.reduce()
+umap.reduce(umap_neighbours=50, umap_dist=0.02)
 vae.reduce(epochs=10, hidden_size=2, lr=0.01, recon_loss_method='mse', plot_loss=True)
 bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', plot_loss=True)
 ```
@@ -213,8 +213,7 @@ bvae.reduce(epochs=10, hidden_size=2, lr=0.01, beta=5, recon_loss_method='mse', 
       3. verbose : bool, print umap verbose training output, defualt=False
 ```python
 # reduce to 2d with umap
-pca.to_2d(umap_neighbours=50, umap_dist=0.02, verbose=True)
-umap.to_2d(umap_neighbours=50, umap_dist=0.02)
+pca.to_2d(umap_neighbours=50, umap_dist=0.02)
 vae.to_2d(umap_neighbours=50, umap_dist=0.02)
 bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 ```
@@ -236,14 +235,11 @@ bvae.to_2d(umap_neighbours=50, umap_dist=0.02)
 
 ```python
 # Plot the vae representation with the AVO fluid factor attribute overlain
-plot_agent(model=pca, attr="FF")
-plot_agent(model=umap, attr="horizon")
-plot_agent(model=vae, attr="FF")
+plot_agent(model=pca, attr="FF", cmap='magma')
+plot_agent(model=umap, attr="horizon", cmap='seismic')
+plot_agent(model=vae, attr="FF", cmap='spring')
 plot_agent(model=bvae, attr="horizon")
 ```
-### Output!
-<a href="url"><img src="./images/test.png" align="center" width="700" ></a>
-
 ---
 
 ## Model Load and save functionality
