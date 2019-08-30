@@ -240,9 +240,6 @@ plot_agent(model=umap, attr="horizon", cmap='seismic')
 plot_agent(model=vae, attr="FF", cmap='spring')
 plot_agent(model=bvae, attr="horizon")
 ```
-### Output!
-<a href="url"><img src="./images/test.png" align="center" width="700" ></a>
-
 ---
 
 ## Model Load and save functionality
