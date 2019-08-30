@@ -1,5 +1,11 @@
 # SeismicReduction
-## Unsupervised Machine Learning: An Application to Seismic Amplitude vs Offset Interpretation ##
+
+[![PyPI version](https://badge.fury.io/py/SeismicReduction.svg)](https://badge.fury.io/py/SeismicReduction)
+[![Build Status](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001.svg?branch=master)](https://travis-ci.com/msc-acse/acse-9-independent-research-project-coush001)
+<img alt="GitHub issues" src="https://img.shields.io/github/issues/msc-acse/acse-9-independent-research-project-coush001"> 
+<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/msc-acse/acse-9-independent-research-project-coush001">
+<img alt="GitHub" src="https://img.shields.io/github/license/msc-acse/acse-9-independent-research-project-coush001">
+<img alt="GitHub stars" src="https://img.shields.io/github/stars/msc-acse/acse-9-independent-research-project-coush001?style=social">
 
 This project delivers a set of tools to run unsupervised machine learning on seismic data sets. The aim is to enable the  efficient experimentation of an array of models and the range of paramaters therein. Specifically the tools allow for efficient recognition of clustering of low fluid-factor anomalies derived from AVO analysis.
 
@@ -12,11 +18,20 @@ This project delivers a set of tools to run unsupervised machine learning on sei
 
 ### Installation:
 - The package is hosted at https://pypi.org/project/SeismicReduction/
-- Install with the following in terminal:
+
+- **Note:** if you are using a **windows** or **linux** machine you must **first** run a seperate installation of PyTorch to ensure package dependencies are met for the SeismicReduction module. This is due to PyTorch's cross platform variability. This step is not necessary for Mac users.
+
+1.  Install PyTorch for Windows or Linux (not required for Mac):
+```bash
+pip3 install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+2.  Install SeismicReduction:
 ```bash
 pip install SeismicReduction
 ```
-- Ensure the python 'jupyter' package is installed for the GUI tool to render properly
+
+3.  Install 'jupyter' package for 'GUI tool' use only (ensure this is installed for rendering of GUI):
 ```python
 pip install jupyter
 ```
@@ -25,14 +40,6 @@ pip install jupyter
 ```python
 import SeismicReduction
 ```
-
-### Example data:
-* The example data set used in the project can be acquired from this link:<br>
-[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- Curteousy of Stanford University*
-- Only the following files need to be extracted:
-> '3d_farstack.sgy', '3d_nearstack.sgy', 'Top_Heimdal_sebset.txt'
-
-- These files are also uploaded to this repo under in the [data/](./data/) folder.
 
 ### Usage:
 There are two ways to utilise the software, each with different merits:
@@ -46,6 +53,14 @@ There are two ways to utilise the software, each with different merits:
     * Easy access to analysis without need of coding experience.
     * Quick and easy to run an analysis with a few button clicks without having to write code.
     * Pickle checkpointing allows for quick runs without having to repeat costly dataloading (similar benefits with Jupyter cells)
+
+### Example data:
+* The example data set used in the project can be acquired from this link:<br>
+[Example dataset[zip, 205mb]](http://pangea.stanford.edu/departments/geophysics/dropbox/SRB/public/data/qsiProject_data.zip) *- Curteousy of Stanford University*
+- Only the following files need to be extracted:
+> '3d_farstack.sgy', '3d_nearstack.sgy', 'Top_Heimdal_sebset.txt'
+
+- These files are also uploaded to this repo under in the [data/](./data/) folder.
   
 ### Example scripts:
 * Example scripts can be found in the [Example_Scripts/](./Example_Scripts/) folder within this repo
